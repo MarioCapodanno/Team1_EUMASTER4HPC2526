@@ -1,0 +1,25 @@
+[u103229@login02 ~]$ 16:39 CEST 2025
+Hostname = mel2059
+Working directory = /home/users/u103229
+FATAL:   Image file already exists: "ollama_latest.sif" - wil$
+time=2025-09-30T14:16:40.504+02:00 level=INFO source=routes.g$
+time=2025-09-30T14:16:40.523+02:00 level=INFO source=images.g$
+time=2025-09-30T14:16:40.525+02:00 level=INFO source=images.g$
+time=2025-09-30T14:16:40.527+02:00 level=INFO source=routes.g$
+time=2025-09-30T14:16:40.531+02:00 level=INFO source=gpu.go:2$
+time=2025-09-30T14:16:41.499+02:00 level=WARN source=cuda_com$
+time=2025-09-30T14:16:41.782+02:00 level=WARN source=cuda_com$
+time=2025-09-30T14:16:42.063+02:00 level=WARN source=cuda_com$
+time=2025-09-30T14:16:42.346+02:00 level=WARN source=cuda_com$
+time=2025-09-30T14:16:42.346+02:00 level=INFO source=types.go$
+time=2025-09-30T14:16:42.346+02:00 level=INFO source=types.go$
+time=2025-09-30T14:16:42.346+02:00 level=INFO source=types.go$
+time=2025-09-30T14:16:42.347+02:00 level=INFO source=types.go$
+[GIN] 2025/09/30 - 14:17:28 | 200 |    3.120305ms |	  127$
+time=2025-09-30T14:17:29.643+02:00 level=INFO source=download$
+time=2025-09-30T14:17:49.018+02:00 level=INFO source=download$
+time=2025-09-30T14:17:50.324+02:00 level=INFO source=download$
+time=2025-09-30T14:17:51.661+02:00 level=INFO source=download$
+time=2025-09-30T14:17:52.987+02:00 level=INFO source=download$
+[GIN] 2025/09/30 - 14:18:00 | 200 | 31.161508496s |	  127$
+error: *** job 3614146 CANCELLED DUE TO TIME LIMIT ***
