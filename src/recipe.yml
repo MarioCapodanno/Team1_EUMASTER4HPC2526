@@ -1,0 +1,5 @@
+bootstrap:
+  hostname: login.lxp.lu
+  port: 8822
+  user: ""
+  identityfile: ""
