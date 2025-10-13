@@ -1,5 +1,8 @@
+# BOOTSTRAP SECTION
+#  Holds all info required for the bootstrap phase,
+#   i.e. when no compute nodes are yet available
 bootstrap:
-  hostname: login.lxp.lu
-  port: 8822
-  user: ""
-  identityfile: ""
+  # hostname alias
+  host: "meluxina"
+  # directory in which the bootstrap files will be placed
+  working_dir: "bootstrap"
