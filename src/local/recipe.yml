@@ -6,3 +6,9 @@ bootstrap:
   host: "meluxina"
   # directory in which the bootstrap files will be placed
   working_dir: "bootstrap"
+
+# TODO
+# BENCHMARK SECTION
+#  Holds all info required for the execution of the
+#  benchmarks
+benchmark:
