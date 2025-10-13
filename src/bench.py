@@ -18,3 +18,4 @@ if __name__ == "__main__":
             }
     print("[INFO] Starting bootstrapping process")
     bootstrap(bootstrap_obj)
+    print("[INFO] Server is ready")
