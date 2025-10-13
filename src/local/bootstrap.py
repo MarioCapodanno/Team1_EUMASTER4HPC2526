@@ -8,21 +8,25 @@ def bootstrap(bootstrap_obj):
     specified hostname via ssh and submits the
     bootstrap job.
 
-    The boostrap job is used to gather access to a computing
+    The bootstrap job is used to gather access to a computing
     node from which all the other operations will take place.
     """
 
     host = bootstrap_obj["host"]
     working_dir = bootstrap_obj["working_dir"]
+    recipe_path = bootstrap_obj["recipe"]
 
     with Connection(host) as c:
         # Create bootstrap working dir if it doesn't exits yet
         c.run(f"mkdir -p {working_dir}", hide=True)
 
-        # Copy boostrap.sh file into this directory
+        # Copy bootstrap.sh file into this directory
         c.put("../scripts/bootstrap.sh", remote=f"{working_dir}/")
+        # Copy the recipe.yml into this directoy
+        c.put(recipe_path, remote=f"{working_dir}/")
+        # TODO: Copy the server directory into this directoy
 
-        # Execute it and wait for the job to be ready
+        # Execute bootstrap.sh and wait for the job to be ready
         res = c.run(f"sbatch {working_dir}/bootstrap.sh", hide=True).stdout.strip()
         jobid = res.split()[3]
 
@@ -33,4 +37,4 @@ def bootstrap(bootstrap_obj):
             else:
                 break
 
-        # TODO: Here we should check that the service is running
+        # TODO: Here we should check that all the services are running before returning back to the caller
