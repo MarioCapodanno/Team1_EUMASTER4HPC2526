@@ -1,5 +1,5 @@
 import sys
-from boostrap import bootstrap
+from bootstrap import bootstrap
 from parser import parse
 
 if __name__ == "__main__":
