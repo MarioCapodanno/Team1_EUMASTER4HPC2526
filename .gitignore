@@ -1,2 +1,3 @@
 *.sif
 ollama_latest.sif
+src/__pycache__/

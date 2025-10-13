@@ -1,5 +1,6 @@
 from fabric import Connection
 from parser import parse
+import time
 
 def bootstrap(bootstrap_obj):
     """
@@ -16,10 +17,20 @@ def bootstrap(bootstrap_obj):
 
     with Connection(host) as c:
         # Create bootstrap working dir if it doesn't exits yet
-        c.run(f"mkdir -p {working_dir}")
+        c.run(f"mkdir -p {working_dir}", hide=True)
 
         # Copy boostrap.sh file into this directory
         c.put("../scripts/bootstrap.sh", remote=f"{working_dir}/")
 
         # Execute it and wait for the job to be ready
-        # TODO
+        res = c.run(f"sbatch {working_dir}/bootstrap.sh", hide=True).stdout.strip()
+        jobid = res.split()[3]
+
+        while True:
+            res = c.run(f"squeue --jobs={jobid} | tail -n 1 | awk '{{print $6}}'", hide=True).stdout.strip()
+            if res != "RUNNING":
+                time.sleep(2)
+            else:
+                break
+
+        # TODO: Here we should check that the service inside the job is running
