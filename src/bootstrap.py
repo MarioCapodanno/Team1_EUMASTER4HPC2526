@@ -33,4 +33,4 @@ def bootstrap(bootstrap_obj):
             else:
                 break
 
-        # TODO: Here we should check that the service inside the job is running
+        # TODO: Here we should check that the service is running

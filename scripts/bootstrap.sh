@@ -8,7 +8,6 @@
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 
-# Load the env
 module add Apptainer
 
 # Run the processing
