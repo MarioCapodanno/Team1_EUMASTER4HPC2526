@@ -40,7 +40,8 @@ if __name__ == "__main__":
     #    1. Gather ip addresses of the services
     #    1. Gather jobids of the services
     print("\nStep 2: Starting service instances...")
-    ip_addresses, job_ids = service_runner()
+    model = (recipe.get("bootstrap") or {}).get("model", "mistral")
+    ip_addresses, job_ids = service_runner(model=model)
     
     if not ip_addresses:
         print("Failed to start services. Exiting.")
@@ -53,10 +54,18 @@ if __name__ == "__main__":
     #    1. Waits for the clients to actually start
     #    1. Send ip addresses to these clients
     print("\nStep 3: Starting client instances...")
-    client_job_ids = client_runner(ip_addresses)
+    client_job_ids = client_runner(ip_addresses, model=model)
     
     if not client_job_ids:
-        print("Failed to start clients. Exiting.")
+        print("Failed to start clients. Cleaning up services and exiting.")
+        # Best-effort cleanup of services if clients can't start
+        try:
+            import subprocess
+            for jid in job_ids:
+                subprocess.run(["scancel", jid])
+                print(f"Stopped service job {jid}")
+        except Exception as e:
+            print(f"Warning: Failed to cancel some service jobs: {e}")
         sys.exit(1)
     
     print(f"Client job IDs: {client_job_ids}")
@@ -65,7 +74,7 @@ if __name__ == "__main__":
     #    1. Waits for the monitors to actually start
     #    1. Send ip addresses to these monitors
     print("\nStep 4: Starting monitor instances...")
-    monitor_runner(ip_addresses, job_ids + client_job_ids)
+    monitor_runner(ip_addresses, client_job_ids, job_ids)
 
     #  SECONDARY THINGS:
     #  1. List currently active services
