@@ -1,3 +1,5 @@
 *.sif
 ollama_latest.sif
 src/__pycache__/*
+.venv/
+.vscode/

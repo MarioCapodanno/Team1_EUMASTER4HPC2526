@@ -1,0 +1,44 @@
+#!/bin/bash -l
+
+#SBATCH --time={{ slurm.time_limit }}
+#SBATCH --qos={{ slurm.qos }}
+#SBATCH --partition={{ slurm.partition }}
+#SBATCH --account={{ slurm.account }}
+#SBATCH --nodes={{ slurm.num_nodes }}
+#SBATCH --ntasks={{ slurm.num_tasks }}
+#SBATCH --ntasks-per-node={{ slurm.tasks_per_node }}
+
+echo "Starting load test client {{ client_id }}..."
+echo "Date: $(date)"
+echo "Hostname: $(hostname -s)"
+echo "Target service node: {{ service_node }}"
+echo "Service port: {{ service_port }}"
+
+# Load environment if needed
+{% if load_modules %}
+{% for module in load_modules %}
+module add {{ module }}
+{% endfor %}
+{% endif %}
+
+# Simple load test - connect to service node
+for j in {1..{{ num_requests }}}; do
+    echo "Client {{ client_id }} sending request $j to {{ service_node }}:{{ service_port }}..."
+    echo "Request details:"
+    echo "  - Model: {{ model }}"
+    echo "  - Prompt: {{ prompt_prefix }} client {{ client_id }}, request $j"
+    echo "  - Timeout: {{ request_timeout }} seconds"
+    
+    curl -X POST http://{{ service_node }}:{{ service_port }}/api/generate \
+        -H "Content-Type: application/json" \
+        -d '{"model": "{{ model }}", "prompt": "{{ prompt_prefix }} client {{ client_id }}, request $j"}' \
+        --max-time {{ request_timeout }} \
+        --verbose \
+        --show-error \
+        --write-out "HTTP Status: %{http_code}, Time: %{time_total}s\n"
+    
+    echo "Request $j completed"
+    sleep {{ request_interval }}
+done
+
+echo "Client {{ client_id }} finished load test"
