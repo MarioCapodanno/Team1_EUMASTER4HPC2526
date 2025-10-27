@@ -5,7 +5,12 @@ import time
 import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+from jinja2 import Environment, FileSystemLoader
+# Support running as a script (no package) or as a module
+try:  # type: ignore
+    from .utils import wait_for_http  # type: ignore
+except Exception:
+    from utils import wait_for_http  # type: ignore
 
 
 class ClientRunner:
@@ -19,7 +24,14 @@ class ClientRunner:
             template_dir: Directory containing Jinja2 templates
             output_dir: Directory to save generated scripts
         """
+        # Resolve template_dir; if not found, try repo-level templates folder
         self.template_dir = Path(template_dir)
+        if not self.template_dir.is_dir():
+            repo_templates = Path(__file__).resolve().parents[2] / "templates"
+            if repo_templates.is_dir():
+                self.template_dir = repo_templates
+            else:
+                print(f"Warning: templates dir '{self.template_dir}' not found; proceeding anyway")
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -141,7 +153,7 @@ class ClientRunner:
                 ["sbatch", str(script_name)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                universal_newlines=True
             )
             
             if result.returncode != 0:
@@ -156,7 +168,7 @@ class ClientRunner:
             raise
 
 
-def client_runner(ip_addresses, num_clients: int = 2, template_dir: str = "templates"):
+def client_runner(ip_addresses, num_clients: int = 2, template_dir: str = "templates", model: str = "mistral"):
     """
     Deploy client workloads.
     
@@ -177,8 +189,11 @@ def client_runner(ip_addresses, num_clients: int = 2, template_dir: str = "templ
     service_node = ip_addresses[0]
     print(f"Starting {num_clients} clients for service at: {service_node}")
     
-    print("Waiting for service to be ready (60 seconds)...")
-    time.sleep(60)
+    # Wait actively for the service to become ready instead of a blind sleep
+    # Extended timeout to allow model pull to complete
+    print("Waiting for service HTTP readiness (up to 300s for model pull)...")
+    if not wait_for_http(service_node, port=11434, path="/api/version", timeout=300, poll=3):
+        print("Warning: Service did not report readiness in time; will proceed anyway.")
     
     runner = ClientRunner(template_dir=template_dir)
     
@@ -191,7 +206,7 @@ def client_runner(ip_addresses, num_clients: int = 2, template_dir: str = "templ
                 service_node=service_node,
                 service_port=11434,
                 num_requests=10,
-                model="mistral",
+                model=model,
                 prompt_prefix="Hello from",
                 request_timeout=60,
                 request_interval=1
