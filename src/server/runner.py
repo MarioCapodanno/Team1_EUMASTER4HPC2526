@@ -30,6 +30,7 @@ if __name__ == "__main__":
     if not os.path.exists(recipe_path):
         print(f"Error: {recipe_path} not found!")
         print("Make sure the local folder structure is correct")
+        # TODO: report this to the user
         sys.exit(1)
     
     try:
@@ -37,6 +38,7 @@ if __name__ == "__main__":
         print(f" Recipe parsed successfully: {recipe}")
     except Exception as e:
         print(f"Error: Failed to parse recipe: {e}")
+        # TODO: report this to the user
         sys.exit(1)
     
     #  1. Start one or more service instances on compute nodes
@@ -50,6 +52,7 @@ if __name__ == "__main__":
     
     if not ip_addresses:
         print("Failed to start services. Exiting.")
+        # TODO: report this to the user
         sys.exit(1)
     
     print(f"Services started on nodes: {ip_addresses}")
@@ -59,6 +62,7 @@ if __name__ == "__main__":
     #    1. Waits for the clients to actually start
     #    1. Send ip addresses to these clients
     print("\nStep 3: Starting client instances...")
+    # TODO: decide the recipe.yaml format for the benchmark and test it.
     client_job_ids = client_runner(ip_addresses, template_dir="templates", model=model)
     
     if not client_job_ids:

@@ -4,6 +4,13 @@ import subprocess
 import os
 from utils import wait_for_jobs_completion
 
+# TODO: decide what type of information the monitor should collect and display
+# Currently the monitor is already configured to collect the following information:
+# - List all running jobs
+# - Wait for client jobs to finish
+# - Clean up - stop all remaining jobs
+# (Right now is just a placeholder to show something)
+
 def monitor_runner(ip_addresses, client_job_ids, service_job_ids):
     """Start monitor instances"""
     print("MONITOR RUNNER")

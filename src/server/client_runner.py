@@ -12,6 +12,7 @@ try:  # type: ignore
 except Exception:
     from utils import wait_for_http  # type: ignore
 
+# TODO: probably we should make this configurable, right now it works only for Ollama
 
 class ClientRunner:
     """Manages client deployment using the Jinja2 templates"""

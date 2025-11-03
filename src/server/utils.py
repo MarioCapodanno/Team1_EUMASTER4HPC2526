@@ -48,6 +48,7 @@ def wait_for_job_state(job_id: str, desired_states: Set[str], timeout: float = 6
         if state in desired_states:
             return True, state
         # If job disappeared from queue and not in desired states, it's likely finished/failed
+        # TODO: if the process is failed, we should report it to the user.
         if state is None:
             return False, last_state
         if time.time() - start > timeout:
@@ -71,7 +72,7 @@ def is_http_ready(host: str, port: int = 11434, path: str = "/api/version", time
     # If curl returns non-zero, it's not ready
     if rc != 0:
         return False
-    # We cannot read the http_code without capturing stdout separately here, so instead run a simpler probe
+    # TODO: check if the following assumption can be valid.
     # If curl exited 0, consider it ready.
     return True
 
