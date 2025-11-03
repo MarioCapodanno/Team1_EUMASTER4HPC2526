@@ -3,3 +3,6 @@ ollama_latest.sif
 src/__pycache__/*
 .venv/
 .vscode/
+.DS_Store
+*.pyc
+*.json

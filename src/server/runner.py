@@ -16,6 +16,11 @@ from monitor_runner import monitor_runner
 recipe_path = os.path.join(local_dir, 'recipe.yml')
 
 if __name__ == "__main__":
+    # Create organized directory structure
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("scripts", exist_ok=True)
+    os.makedirs("outputs", exist_ok=True)
+    
     # REQUIREMENTS:
     #  PRIMARY THING TO DO:
     #  1. Parse recipe.yml
@@ -54,7 +59,7 @@ if __name__ == "__main__":
     #    1. Waits for the clients to actually start
     #    1. Send ip addresses to these clients
     print("\nStep 3: Starting client instances...")
-    client_job_ids = client_runner(ip_addresses, model=model)
+    client_job_ids = client_runner(ip_addresses, template_dir="templates", model=model)
     
     if not client_job_ids:
         print("Failed to start clients. Cleaning up services and exiting.")

@@ -15,6 +15,9 @@ def service_runner(model: str = "mistral"):
         print(f"Error: {script_path} not found!")
         return [], []
     
+    # Ensure logs directory exists
+    os.makedirs("logs", exist_ok=True)
+    
     try:
         env = os.environ.copy()
         env["OLLAMA_MODEL"] = model
