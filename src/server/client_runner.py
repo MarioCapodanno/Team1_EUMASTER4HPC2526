@@ -16,7 +16,7 @@ except Exception:
 class ClientRunner:
     """Manages client deployment using the Jinja2 templates"""
     
-    def __init__(self, template_dir: str = "templates", output_dir: str = "."):
+    def __init__(self, template_dir: str = "templates", output_dir: str = "scripts"):
         """
         Initialize the class.
         
@@ -176,6 +176,7 @@ def client_runner(ip_addresses, num_clients: int = 2, template_dir: str = "templ
         ip_addresses: List of service node IP addresses
         num_clients: Number of client instances to spawn
         template_dir: Directory containing Jinja2 templates
+        model: Model name for inference
         
     Returns:
         List of job IDs
@@ -195,7 +196,7 @@ def client_runner(ip_addresses, num_clients: int = 2, template_dir: str = "templ
     if not wait_for_http(service_node, port=11434, path="/api/version", timeout=300, poll=3):
         print("Warning: Service did not report readiness in time; will proceed anyway.")
     
-    runner = ClientRunner(template_dir=template_dir)
+    runner = ClientRunner(template_dir=template_dir, output_dir="scripts")
     
     # TODO: this configuration is still dependent on Ollama specifics. Need to generalize.
     job_ids = []

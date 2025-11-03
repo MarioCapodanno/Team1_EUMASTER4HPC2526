@@ -29,15 +29,44 @@ for j in {1..{{ num_requests }}}; do
     echo "  - Prompt: {{ prompt_prefix }} client {{ client_id }}, request $j"
     echo "  - Timeout: {{ request_timeout }} seconds"
     
-    curl -X POST http://{{ service_node }}:{{ service_port }}/api/generate \
-        -H "Content-Type: application/json" \
-        -d '{"model": "{{ model }}", "prompt": "{{ prompt_prefix }} client {{ client_id }}, request $j"}' \
-        --max-time {{ request_timeout }} \
-        --verbose \
-        --show-error \
-        --write-out "HTTP Status: %{http_code}, Time: %{time_total}s\n"
+    # Capture timing metrics
+    start_time=$(date +%s.%N)
+    echo "START_TIME:$start_time"
     
-    echo "Request $j completed"
+    # Retry logic for model not found (404) errors
+    retry_count=0
+    max_retries=3
+    while [ $retry_count -lt $max_retries ]; do
+        response=$(curl -X POST http://{{ service_node }}:{{ service_port }}/api/generate \
+            -H "Content-Type: application/json" \
+            -d '{"model": "{{ model }}", "prompt": "{{ prompt_prefix }} client {{ client_id }}, request $j"}' \
+            --max-time {{ request_timeout }} \
+            --verbose \
+            --show-error \
+            --write-out "HTTP Status: %{http_code}, Time: %{time_total}s\n" 2>&1)
+        
+        echo "$response"
+        
+        # Check if response contains 404 error
+        if echo "$response" | grep -q "HTTP Status: 404"; then
+            retry_count=$((retry_count + 1))
+            echo "Model not found, retry $retry_count/$max_retries in 10 seconds..."
+            sleep 10
+        else
+            # Success or different error, break retry loop
+            break
+        fi
+    done
+    
+    if [ $retry_count -eq $max_retries ]; then
+        echo "Max retries reached for request $j"
+    fi
+    
+    end_time=$(date +%s.%N)
+    duration=$(echo "$end_time - $start_time" | bc -l)
+    echo "END_TIME:$end_time"
+    echo "DURATION:$duration"
+    echo "Request $j completed in ${duration}s"
     sleep {{ request_interval }}
 done
 
