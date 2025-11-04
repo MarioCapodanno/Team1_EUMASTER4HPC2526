@@ -1,0 +1,1601 @@
+Starting load test client 1...
+Date: Mon Nov  3 16:35:46 CET 2025
+Hostname: mel2041
+Target service node: mel2039
+Service port: 11434
+Client 1 sending request 1 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 1
+  - Timeout: 60 seconds
+START_TIME:1762184146.304794882
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+100    65    0     0  100    65      0     29  0:00:02  0:00:02 --:--:--    29100    65    0     0  100    65      0     15  0:00:04  0:00:04 --:--:--    15100    65    0     0  100    65      0     10  0:00:06  0:00:06 --:--:--    10< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:35:54 GMT
+< Transfer-Encoding: chunked
+< 
+{ [1325 bytes data]
+100  1312    0  1247  100    65    151      7  0:00:09  0:00:08  0:00:01   159{"model":"mistral","created_at":"2025-11-03T15:35:54.414360325Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.4272562Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.435310512Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.443327895Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.451575338Z","response":"m","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.459539371Z","response":" here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.467486134Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.475459857Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.483460059Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.491433182Z","response":" However","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.500183295Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.508186188Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.51620032Z","response":" need","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.524529834Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.532533556Z","response":" bit","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.540532399Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.548855782Z","response":" context","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.556888845Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.564949537Z","response":" assist","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.573289231Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.584792324Z","response":" effectively","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.592967517Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.60154081Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.609617263Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.617736376Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.626118329Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.634139972Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.641235134Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.647865977Z","response":" using","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.654911719Z","response":" some","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.661576691Z","response":" kind","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.668258784Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.674929996Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.681926518Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.688584481Z","response":" script","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.695261493Z","response":"ing","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.701918715Z","response":" language","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.708963618Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.71563586Z","response":" and","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.722329682Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.729030985Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.736089657Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.74274511Z","response":" asking","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.749424412Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.756105274Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.763201927Z","response":" value","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.769885979Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.776607951Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.783319044Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.790387646Z","response":" named","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.797067088Z","response":" \"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.803790151Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.812846814Z","response":"\".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.819837436Z","response":" In","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.826606179Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.833394631Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.840182944Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.847430966Z","response":" example","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.854206608Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.860985431Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.867862083Z","response":" can","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.875074206Z","response":" access","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.881876188Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.88864166Z","response":" value","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.895395593Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.902175195Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.908924147Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.91568016Z","response":" by","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.922447852Z","response":" simply","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.929245295Z","response":" refer","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.936022867Z","response":"encing","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.942796039Z","response":" it","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.949559242Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.956331614Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.963094036Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.969846549Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.976607221Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.983374083Z","response":"javascript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.990181406Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:54.996984488Z","response":"let","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.00374278Z","response":" j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.010511573Z","response":" =","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.017267765Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.024040197Z","response":"1","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.100  9554    0  9489  100    65   1076      7  0:00:09  0:00:08  0:00:01  1084033710491Z","response":"0","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.040513873Z","response":";","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.047316476Z","response":" //","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.054108548Z","response":" Let","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.06090105Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.067693643Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.074484445Z","response":" assume","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.081261348Z","response":" this","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.08805959Z","response":" is","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.094841962Z","response":" your","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.101622635Z","response":" line","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.108411087Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.115243929Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.122077512Z","response":" where","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.128849034Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.135654836Z","response":" define","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.142414489Z","response":" $","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.149234881Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.156013154Z","response":" as","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.163375036Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.170163999Z","response":"1","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.176958471Z","response":"0","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.183815993Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.190679926Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.197462648Z","response":"console","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.2042641Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.211089993Z","response":"log","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.218229015Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.225014347Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.23180081Z","response":");","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.238597882Z","response":" //","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.245384525Z","response":" This","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.254574908Z","response":" will","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.26142256Z","response":" output","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.268262753Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.275094725Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.281924957Z","response":"1","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.28872516Z","response":"0","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.295551712Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.302355405Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.309167177Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.315995739Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.322793992Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.329607364Z","response":"If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.336923077Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.343778789Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.350589831Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.357422514Z","response":" working","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.364254006Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.371080829Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.377889301Z","response":" different","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.384714243Z","response":" programming","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.391979216Z","response":" language","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.398803158Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.40559033Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.412425523Z","response":" syntax","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.419635935Z","response":" might","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.426474338Z","response":" be","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.43330445Z","response":" different","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.440143902Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.447310125Z","response":" If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.454129787Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.4609346Z","response":" provide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.467753242Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.479351086Z","response":" information","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.486239969Z","response":" about","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.493111031Z","response":" your","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.500413994Z","response":" context","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.507276006Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.514178078Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.52101599Z","response":" can","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.528305743Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.535148526Z","response":" better","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.542028738Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:55.54897904Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1083,29510,29487,2004,1066,2084,29491,3761,29493,1083,1695,1032,3054,1448,3526,1066,6799,1136,12234,29491,1429,4737,1505,1136,29510,1035,2181,1509,2880,1070,3464,1210,7535,1056,4610,29493,1072,1136,29510,1035,7969,1122,1040,1960,1070,1032,8628,5928,8453,29536,3354,1328,27049,29493,1122,3525,29493,1136,1309,3503,1040,1960,1070,1032,8628,1254,4536,4063,11463,1146,29515,781,781,14708,29600,20936,781,1663,1229,1095,29473,29508,29502,29513,1357,3937,29510,29481,7914,1224,1117,1342,2175,1070,3464,1738,1136,7368,1197,29536,1158,29473,29508,29502,29491,781,14892,29491,2350,29500,29536,1112,1357,1619,1390,4593,29515,29473,29508,29502,781,14708,29600,781,781,4149,1136,29510,1035,3507,1163,1032,2349,17060,4610,29493,1040,25995,2427,1115,2349,29491,1815,1136,3852,1448,2639,1452,1342,3526,29493,1083,1309,2084,2641,29576],"total_duration":9237858067,"load_duration":7897534809,"prompt_eval_count":1100 16529    0 16464  100    65   1781      7  0:00:09  0:00:09 --:--:--  2339
+* Connection #0 to host mel2039 left intact
+3,"prompt_eval_duration":203740101,"eval_count":159,"eval_duration":1065877786}
+HTTP Status: 200, Time: 9.240892s
+END_TIME:1762184155.556954976
+DURATION:9.252160094
+Request 1 completed in 9.252160094s
+Client 1 sending request 2 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 2
+  - Timeout: 60 seconds
+START_TIME:1762184156.562621341
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:35:56 GMT
+< Transfer-Encoding: chunked
+< 
+{ [105 bytes data]
+{"model":"mistral","created_at":"2025-11-03T15:35:56.617710853Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.624205565Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.630884417Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.63751058Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.644723442Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.651352095Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.657996507Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.664701089Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.671681982Z","response":" using","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.678349064Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.685006436Z","response":" pseud","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.691690879Z","response":"oc","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.698748891Z","response":"ode","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.705435983Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.712132976Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.718852138Z","response":" programming","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.725902501Z","response":" language","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.732616043Z","response":" where","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.739303245Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.746072697Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.757466072Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.764166684Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.770865846Z","response":" might","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.777977499Z","response":" be","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.784666661Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.791355243Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.798058476Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.805275418Z","response":" However","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.811964631Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.818694323Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.825396675Z","response":" don","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.832447258Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.83912824Z","response":"t","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.845819552Z","response":" have","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.852527335Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.859773687Z","response":" context","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.866465039Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.873186152Z","response":" your","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.879931324Z","response":" entire","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.886710146Z","response":" program","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.893457639Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.900246271Z","response":" provide","done":false}
+{"model":"mistral",100  7130    0  7065  100    65  12915    118 --:--:-- --:--:-- --:--:-- 13010"created_at":"2025-11-03T15:35:56.906971554Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.914077036Z","response":" precise","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.920778569Z","response":" answer","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.927503971Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.934220523Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.941465366Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.948211618Z","response":"If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.95498675Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.961704383Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.968782435Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.979283369Z","response":" asking","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.986074711Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:56.992854794Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.000281096Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.007085759Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.013934171Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.020777983Z","response":" here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.027940256Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.034697488Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.041472771Z","response":" how","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.048291703Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.055626016Z","response":" can","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.062426618Z","response":" assign","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.06921875Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.076015103Z","response":" value","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.083148205Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.089903587Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.09667282Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.103431602Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.110705655Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.117502237Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.124301809Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.131096662Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.137873284Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.144703956Z","response":"javascript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.151489289Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.158263931Z","response":"let","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.165460024Z","response":" j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.172263046Z","response":" =","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.179028919Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.185797651Z","response":"5","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.193070333Z","response":";","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.203900967Z","response":" //","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.210777419Z","response":" Re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.218081362Z","response":"place","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.224849454Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.231643507Z","response":"5","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.238420129Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.245465462Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.252254214Z","response":" desired","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.259089286Z","response":" value","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.265906289Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.273156181Z","response":"console","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.279978743Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.286802496Z","response":"log","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.293601678Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.300732401Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.307510233Z","response":");","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.314283926Z","response":" //","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.321124998Z","response":" This","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.32788393Z","response":" will","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.334667173Z","response":" output","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.341436385Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.348258217Z","response":" value","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.35501961Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.361798162Z","response":" j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.368563365Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.375340997Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.382111719Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.388914101Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.395683224Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.402453256Z","response":"If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.409209319Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.416031551Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.426460425Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.433286697Z","response":" using","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.440156309Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.446958082Z","response":" different","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.453755164Z","response":" programming","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.460576877Z","response":" language","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.467370169Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.474235371Z","response":" please","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.481046484Z","response":" provide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.487855476Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.494656008Z","response":" context","done":false}
+{"100 14071    0 14006  100    65  14277     66 --:--:-- --:--:-- --:--:-- 14328
+* Connection #0 to host mel2039 left intact
+model":"mistral","created_at":"2025-11-03T15:35:57.501521571Z","response":" so","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.508279853Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.515149345Z","response":" can","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.521993218Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.52881731Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.536199313Z","response":" better","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.543055965Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:57.549919768Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1429,4737,1505,1136,29510,1035,2181,1032,23555,1170,1341,1210,1032,17060,4610,1738,2320,29544,29536,29600,2427,1115,1032,8628,29491,3761,29493,1083,1717,29510,29475,1274,1040,3526,1070,1342,4061,2775,1066,3852,1032,17776,5140,29491,781,781,4149,1136,29510,1035,7969,1122,2084,1163,27049,29493,2004,29510,29481,1678,1136,1309,12525,1032,1960,1066,2320,29536,29600,29515,781,781,14708,29600,20936,781,1663,1229,1095,29473,29550,29513,1357,2066,3680,29473,29550,1163,1040,12553,1960,781,14892,29491,2350,29500,29536,1112,1357,1619,1390,4593,1040,1960,1070,1229,781,14708,29600,781,781,4149,1136,29510,1035,2181,1032,2349,17060,4610,29493,5433,3852,1448,3526,1347,1083,1309,2084,1136,2641,29576],"total_duration":978465100,"load_duration":34460632,"prompt_eval_count":13,"prompt_eval_duration":10067774,"eval_count":135,"eval_duration":871907557}
+HTTP Status: 200, Time: 0.981130s
+END_TIME:1762184157.555555693
+DURATION:.992934352
+Request 2 completed in .992934352s
+Client 1 sending request 3 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 3
+  - Timeout: 60 seconds
+START_TIME:1762184158.560030202
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:35:58 GMT
+< Transfer-Encoding: chunked
+< 
+{ [105 bytes data]
+{"model":"mistral","created_at":"2025-11-03T15:35:58.609518177Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.616131149Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.623453602Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.630072794Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.636769406Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.643424249Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.650597711Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.657248923Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.663903745Z","response":" trying","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.670560358Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.67768389Z","response":" make","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.684382803Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.691074535Z","response":" request","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.697775037Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.70488385Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.711583142Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.718254344Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.724955047Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.732147799Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.738918002Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.749672226Z","response":" in","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.756364008Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.76303199Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.769739802Z","response":" However","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.776416665Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.783583477Z","response":" as","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.7902456Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.796913612Z","response":" responsible","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.803586604Z","response":" and","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.810838967Z","response":" friendly","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.817516079Z","response":" assistant","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.824234271Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.830927084Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.838087776Z","response":" would","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.844756848Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.851460771Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.858136443Z","response":" remind","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.865373026Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.872089678Z","response":" that","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.8788561Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.885575373Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.892677515Z","response":"m","done":false}
+{"model":"mistral","c100  7384    0  7319  100    65  13116    116 --:--:-- --:--:-- --:--:-- 13209reated_at":"2025-11-03T15:35:58.899353958Z","response":" here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.90610372Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.912801712Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.920014055Z","response":" answer","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.926760227Z","response":" questions","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.93353133Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.940280942Z","response":" provide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.947423444Z","response":" explan","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.954140167Z","response":"ations","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.960855079Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.971201543Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.978652615Z","response":" guide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.985414968Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.99222127Z","response":" through","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:58.999011232Z","response":" coding","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.006155825Z","response":" problems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.012913437Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.019675229Z","response":" but","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.026445362Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.033794165Z","response":" can","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.040570607Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.047359139Z","response":"t","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.054137692Z","response":" execute","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.061322704Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.068088196Z","response":" directly","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.074883199Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.081657901Z","response":" provide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.088927244Z","response":" specific","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.095719176Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.102506348Z","response":" values","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.109297481Z","response":" within","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.116512423Z","response":" your","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.123306685Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.130080728Z","response":"base","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.13686298Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.144190133Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.150988135Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.157836828Z","response":"In","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.16467879Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.171851253Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.178605555Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.185386477Z","response":" exact","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.19446401Z","response":" use","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.201275563Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.208046415Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.214827357Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.22161263Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.228385722Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.235215484Z","response":" depends","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.242005427Z","response":" on","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.248798569Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.255629302Z","response":" library","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.262434734Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.269250216Z","response":" framework","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.276035319Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.283385641Z","response":" might","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.290211994Z","response":" be","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.297018606Z","response":" using","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.303891939Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.311120701Z","response":" If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.317895303Z","response":" it","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.324698936Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.331481098Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.338388Z","response":" jQuery","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.345158203Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.351964025Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.358745958Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.36555507Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.372319312Z","response":" is","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.379127275Z","response":" an","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.385893277Z","response":" alias","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.392693119Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.399472172Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.406297184Z","response":" jQuery","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.415320027Z","response":" function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.42216886Z","response":" and","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.428982212Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.435814534Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.442654747Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.450105179Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.456944952Z","response":" would","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.463856464Z","response":" work","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.470745727Z","response":" as","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.477980379Z","response":" well","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.484799642Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.491658534Z","response":" In","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.498463046Z","response":" van","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.505854339Z","response":"illa","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.512673191Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.519522294Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.526388586Z","response":" there","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.533613348Z","response":" isn","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.540427621Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.547260673Z","response":"t","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.554085366Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.561521358Z","response":" built","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.568338801Z","response":"-","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.575195963Z","response":"in","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.582067285Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.589838428Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.596678601Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.603497043Z","response":"`.","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.610294945Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.617164528Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.62401661Z","response":"If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.630837453Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.640737216Z","response":" have","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.647607148Z","response":" specific","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.654444741Z","response":" questions","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.661291873Z","response":" about","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.668142235Z","response":" how","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.674993228Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.68185093Z","response":" use","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.688679953Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.695521225Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.702401787Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.70923258Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.716080052Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.722941394Z","response":" need","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.729801867Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.737197699Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.744073972Z","response":" your","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.750969444Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.757925237Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.764817219Z","response":" feel","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.771697822Z","response":" free","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.778902484Z","response":" to","done":false}
+{100 17888    0 17823  100    65  14419     52  0:00:01  0:00:01 --:--:-- 14472
+* Connection #0 to host mel2039 left intact
+"model":"mistral","created_at":"2025-11-03T15:35:59.785738356Z","response":" ask","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.792587589Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:35:59.799467331Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1429,4737,1505,1136,29510,1035,3710,1066,1806,1032,2927,1122,1040,8628,2320,29544,29536,29600,1065,27049,29491,3761,29493,1158,1032,8100,1072,10899,14660,29493,1083,1450,1505,1066,9073,1136,1137,1083,29510,29487,2004,1066,2084,5140,4992,29493,3852,11696,1465,29493,1210,9095,1136,1827,23131,5186,29493,1330,1083,1309,29510,29475,12851,3464,5858,1210,3852,3716,8628,3837,3141,1342,3464,3661,29491,781,781,1425,27049,29493,1040,4227,1706,1070,2320,29544,29536,29600,10386,1124,1032,8375,1210,11550,1136,2427,1115,2181,29491,1815,1146,29510,29481,13025,29493,2320,29544,29600,1117,1164,19728,1122,1040,13025,1676,1072,2320,29544,29536,29600,1450,1539,1158,1930,29491,1328,2465,5302,27049,29493,1504,3925,29510,29475,1032,5197,29501,1030,2320,29544,29536,10197,781,781,4149,1136,1274,3716,4992,1452,1678,1066,1706,2320,29544,29536,29600,1210,1695,2084,1163,1342,3464,29493,2369,2701,1066,2228,29576],"total_duration":1233841260,"load_duration":33093852,"prompt_eval_count":13,"prompt_eval_duration":9322523,"eval_count":172,"eval_duration":1111841023}
+HTTP Status: 200, Time: 1.236185s
+END_TIME:1762184159.804612861
+DURATION:1.244582659
+Request 3 completed in 1.244582659s
+Client 1 sending request 4 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 4
+  - Timeout: 60 seconds
+START_TIME:1762184160.808905599
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:36:00 GMT
+< Transfer-Encoding: chunked
+< 
+{ [104 bytes data]
+100  3849    0  3784  100    65  12529    215 --:--:-- --:--:-- --:--:-- 12702{"model":"mistral","created_at":"2025-11-03T15:36:00.85789303Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.864564222Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.871264225Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.877915607Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.885162009Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.891853161Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.898530644Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.905191596Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.912364529Z","response":" using","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.919069871Z","response":" some","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.925751664Z","response":" sort","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.932412336Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.939354898Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.946028471Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.952723413Z","response":" syntax","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.959414035Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.966163087Z","response":" The","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.97287839Z","response":" \"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.979589342Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.986344134Z","response":"\"","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:00.995266368Z","response":" might","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.00196411Z","response":" be","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.008653632Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.015532615Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.022203517Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.028884449Z","response":" placeholder","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.035573442Z","response":" in","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.042824734Z","response":" your","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.049518916Z","response":" system","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.056241839Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.062965011Z","response":" but","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.070066034Z","response":" without","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.076754576Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.083451278Z","response":" context","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.090153141Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.097146323Z","response":" it","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.103839706Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.110545898Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.11724964Z","response":" hard","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.123987833Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.130698775Z","response":" provide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.137423687Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.14422828Z","response":" precise","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.150999362Z","response":" answer","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.157738734Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.164477456Z","response":" If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.171183559Z","response":" this","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.177923291Z","response":" is","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.184638523Z","response":" related","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.191367046Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.198137618Z","response":" programming","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.204872821Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.213747944Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.220549176Z","response":" recommend","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.227315309Z","response":" checking","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.234107421Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.240891143Z","response":" documentation","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.247676805Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.254454658Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.2612895Z","response":" specific","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.268082903Z","response":" language","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.274847705Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.281628637Z","response":" framework","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.28843259Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.295242022Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.302617515Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.309401797Z","response":" using","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.31620722Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.322995522Z","response":" guidance","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.330197184Z","response":" on","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.336971847Z","response":" how","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.343740989Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.350512821Z","response":" handle","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.357338524Z","response":" variables","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.364159586Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.370951488Z","response":" \"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.377723371Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.384483253Z","response":"\".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.391306255Z","response":" If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.398118068Z","response":" it","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.40487752Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.411941083Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.418708825Z","response":" part","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.425490158Z","response":" of","done":false}
+{"mod100 11200    0 11135  100    65  14517     84 --:--:-- --:--:-- --:--:-- 14583
+* Connection #0 to host mel2039 left intact
+el":"mistral","created_at":"2025-11-03T15:36:01.435147601Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.442504113Z","response":" command","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.449354156Z","response":" line","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.456176968Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.462984271Z","response":" perhaps","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.470137003Z","response":" running","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.476912585Z","response":" it","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.483718508Z","response":" in","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.49048639Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.497555923Z","response":" console","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.504326935Z","response":" and","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.511189007Z","response":" seeing","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.51799034Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.525015112Z","response":" output","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.531793824Z","response":" could","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.538591487Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.545404609Z","response":" clar","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.552434272Z","response":"ify","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.559254094Z","response":" its","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.566093876Z","response":" purpose","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.572906409Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:01.579709231Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1429,4737,1505,1136,29510,1035,2181,1509,3895,1070,3464,1210,25995,29491,1183,8453,29536,29507,2427,1115,1032,8628,1210,18223,1065,1342,2355,29493,1330,2439,1448,3526,29493,1146,29510,29481,2624,1066,3852,1032,17776,5140,29491,1815,1224,1117,5970,1066,17060,29493,1083,7325,13547,1040,13673,1122,1040,3716,4610,1210,11550,1136,29510,1035,2181,1122,16756,1124,1678,1066,5037,9693,1505,8453,29536,3354,1815,1146,29510,29481,1512,1070,1032,4213,2175,29493,5998,4590,1146,1065,1040,6689,1072,7020,1040,4593,1597,2084,16834,2343,1639,6800,29491],"total_duration":764028314,"load_duration":30459079,"prompt_eval_count":13,"prompt_eval_duration":10136423,"eval_count":106,"eval_duration":676205989}
+HTTP Status: 200, Time: 0.767585s
+END_TIME:1762184161.585731062
+DURATION:.776825463
+Request 4 completed in .776825463s
+Client 1 sending request 5 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 5
+  - Timeout: 60 seconds
+START_TIME:1762184162.589972161
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:36:02 GMT
+< Transfer-Encoding: chunked
+< 
+{ [105 bytes data]
+{"model":"mistral","created_at":"2025-11-03T15:36:02.658185987Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.664793649Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.671716541Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.678323254Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.684963396Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.691618118Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.698944831Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.705605653Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.712269215Z","response":" trying","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.718971658Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.72599975Z","response":" request","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.732687422Z","response":" some","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.739362465Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.746049347Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.75323204Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.759932552Z","response":" Here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.766628394Z","response":" is","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.773350867Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.780426479Z","response":" simple","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.787155881Z","response":" example","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.796629725Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.803315157Z","response":" how","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.81051502Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.817213362Z","response":" create","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.823901104Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.830613116Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.837669339Z","response":" in","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.844366721Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.851076064Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.857756996Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.864970839Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.871694481Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.878390583Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.885113295Z","response":"javascript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.892258288Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.89893432Z","response":"var","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.905621573Z","response":" j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.912333425Z","response":" =","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.919587078Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.92631542Z","response":"0","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.933017522Z","response":";","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.939750275Z","response":" //","done":false}
+{"model":"mistral","created100  6634    0  6569  100    65  12488    123 --:--:-- --:--:-- --:--:-- 12588_at":"2025-11-03T15:36:02.946821467Z","response":" This","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.953542229Z","response":" line","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.960312581Z","response":" creates","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.967068984Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.974321246Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.981105908Z","response":" named","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.987877271Z","response":" '","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:02.994620513Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.001715475Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.008454517Z","response":" and","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.01738918Z","response":" assign","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.024182963Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.031612496Z","response":" it","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.038433227Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.0452405Z","response":" value","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.052056972Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.059189214Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.065972467Z","response":"0","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.072739629Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.079518061Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.086815594Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.093613806Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.100378018Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.107180841Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.114368723Z","response":"If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.121134125Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.127888588Z","response":" need","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.13467492Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.141924842Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.148755824Z","response":" something","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.155532187Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.162332779Z","response":" specific","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.169512091Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.176286124Z","response":" please","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.183077596Z","response":" let","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.189842408Z","response":" me","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.19697854Z","response":" know","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.203756683Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:03.210553345Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1429,4737,1505,1136,29510,1035,3710,1066,2927,1509,27049,3464,29491,4771,1117,1032,4356,3525,1070,1678,1066,2999,1032,8628,1065,27049,29515,781,781,14708,29600,20936,781,1890,1229,1095,29473,29502,29513,1357,1619,2175,13420,1032,8628,5928,1232,2953100  8566    0  8501  100    65  13777    105 --:--:-- --:--:-- --:--:-- 13860
+* Connection #0 to host mel2039 left intact
+6,29510,1072,12525,29481,1146,1040,1960,1070,29473,29502,29491,781,14708,29600,781,781,4149,1136,1695,2084,1163,2313,1448,3716,29493,5433,2114,1296,1641,29576],"total_duration":615389451,"load_duration":52007959,"prompt_eval_count":13,"prompt_eval_duration":9552163,"eval_count":81,"eval_duration":514808043}
+HTTP Status: 200, Time: 0.617278s
+END_TIME:1762184163.215228074
+DURATION:.625255913
+Request 5 completed in .625255913s
+Client 1 sending request 6 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 6
+  - Timeout: 60 seconds
+START_TIME:1762184164.219303992
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:36:04 GMT
+< Transfer-Encoding: chunked
+< 
+{ [105 bytes data]
+{"model":"mistral","created_at":"2025-11-03T15:36:04.267810808Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.27399777Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.280618752Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.287285724Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.294231286Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.300841089Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.307470091Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.314120733Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.321063835Z","response":" trying","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.327717197Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.33435798Z","response":" execute","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.341097572Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.347923654Z","response":" command","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.354619706Z","response":" related","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.361281769Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.368012211Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.374964663Z","response":" (","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.381668186Z","response":"den","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.388361088Z","response":"oted","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.39512853Z","response":" by","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.404122803Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.410803415Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.417465927Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.42421593Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.430865912Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.437560744Z","response":").","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.444232716Z","response":" However","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.450932749Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.457619091Z","response":" as","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.464331923Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.470996235Z","response":" text","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.477698347Z","response":"-","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.48438302Z","response":"based","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.491124952Z","response":" AI","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.497817564Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.504492836Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.511181219Z","response":" don","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.517884271Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.524610203Z","response":"t","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.531288765Z","response":" have","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.537978128Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.54470175Z","response":" ability","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.551391442Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.558153364Z","response":" execute","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.564841597Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.571558409Z","response":" directly","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.578274511Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.585011043Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.591758965Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.598508368Z","response":"If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.6053028Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.612009892Z","response":" need","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.620527835Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.627318708Z","response":" understanding","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.63415201Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.640921762Z","response":" writing","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.647694964Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.654483077Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.661262169Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.668620051Z","response":" feel","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.675407833Z","response":" free","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.682216006Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.689023118Z","response":" ask","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.69619815Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.702987533Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.709774715Z","response":" can","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.716540697Z","response":" certainly","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.72333294Z","response":" assist","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.730156612Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.736926134Z","response":" that","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.743708666Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.750481769Z","response":" If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.757293561Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.764098693Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.770870415Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.777647138Z","response":" looking","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.78444827Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.791253992Z","response":" run","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.798024274Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.804800827Z","response":" in","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.811583999Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.818397331Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.825161943Z","response":" traditional","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.831954416Z","response":" environment","done":false}
+{"model":"mistral","created100 12182    0 12117  100    65  14598     78 --:--:-- --:--:-- --:--:-- 14677
+* Connection #0 to host mel2039 left intact
+_at":"2025-11-03T15:36:04.840835329Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.847633501Z","response":" such","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.854418913Z","response":" as","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.861250915Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.868036178Z","response":" web","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.8748198Z","response":" browser","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.881605162Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.888422755Z","response":" Node","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.895248817Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.902280319Z","response":"js","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.909115611Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.915912044Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.922702176Z","response":" would","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.929726968Z","response":" typically","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.93651126Z","response":" use","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.943338413Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.950111305Z","response":" tool","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.956910147Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.96369558Z","response":" B","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.970491562Z","response":"abel","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.977269914Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.984121007Z","response":" trans","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.990882299Z","response":"p","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:04.997681561Z","response":"ilation","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:05.004463653Z","response":" if","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:05.011512876Z","response":" your","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:05.018318098Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:05.02514318Z","response":" uses","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:05.031948982Z","response":" modern","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:05.038794335Z","response":" syntax","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:05.045568137Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:05.052417049Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1429,4737,1505,1136,29510,1035,3710,1066,12851,1032,4213,5970,1066,27049,1093,2388,5386,1254,1040,2320,29544,29536,29600,1377,3761,29493,1158,1032,3013,29501,6295,16875,29493,1083,1717,29510,29475,1274,1040,6305,1066,12851,3464,5858,29491,781,781,4149,1136,1695,2084,7167,1210,4421,27049,3464,29493,2369,2701,1066,2228,29576,1083,1309,6553,6799,1163,1137,29491,1815,1136,29510,1035,3294,1066,2250,27049,1065,1032,1448,7830,5234,29493,2027,1158,1032,5454,12574,1210,10895,29491,3545,29493,1136,1450,10334,1706,1032,4689,1505,1133,1856,1122,1971,29488,11981,1281,1342,3464,6866,5406,25995,29491],"total_duration":827463105,"load_duration":30380559,"prompt_eval_count":13,"prompt_eval_duration":10325283,"eval_count":116,"eval_duration":737930336}
+HTTP Status: 200, Time: 0.830090s
+END_TIME:1762184165.057625732
+DURATION:.838321740
+Request 6 completed in .838321740s
+Client 1 sending request 7 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 7
+  - Timeout: 60 seconds
+START_TIME:1762184166.064791334
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:36:06 GMT
+< Transfer-Encoding: chunked
+< 
+{ [105 bytes data]
+100   354    0   289  100    65   5557   1250 --:--:-- --:--:-- --:--:--  6679{"model":"mistral","created_at":"2025-11-03T15:36:06.109402582Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.115987313Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.122689736Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.129319778Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.13593682Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.142569953Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.149245815Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.155865677Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.162515769Z","response":" asking","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.169186461Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.175836093Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.182487336Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.189159378Z","response":"-","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.19584282Z","response":"related","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.202536862Z","response":" response","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.209279295Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.215972977Z","response":" Here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.222675759Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.229403381Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.236108434Z","response":" an","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.244690136Z","response":" example","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.251360389Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.258584161Z","response":" how","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.265254943Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.271953205Z","response":" assign","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.278634048Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.28574916Z","response":" variable","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.292440183Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.299128625Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.305795357Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.312479929Z","response":" in","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.319206921Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.325881034Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.332570206Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.339254988Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.34596182Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.352676823Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.359366315Z","response":"javascript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.366617577Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.37333095Z","response":"var","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.380072212Z","response":" j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.386807044Z","response":" =","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.394025446Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.400773428Z","response":"1","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.407525171Z","response":"2","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.414311383Z","response":"3","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.421078685Z","response":";","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.427814388Z","response":" //","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.43452863Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.441236172Z","response":" j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.447965694Z","response":" could","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.454701786Z","response":" be","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.46358898Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.470388762Z","response":" string","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.477168694Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.483964286Z","response":" boolean","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.490750998Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.497531651Z","response":" etc","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.504299153Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.511125885Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.517903718Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.52468472Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.531446962Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.538273064Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.545059747Z","response":"However","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.551841949Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.558597881Z","response":" if","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.565397834Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.572200266Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.578956568Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.58572312Z","response":" working","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.592499772Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.599261165Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.606588117Z","response":" specific","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.613366879Z","response":" framework","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.620164452Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.626935134Z","response":" environment","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.634159496Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.640914329Z","response":" such","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.647682211Z","response":" as","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.654445383Z","response":" Node","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.661228515Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.667978028Z","response":"js","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.67477364Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.683667153Z","response":" React",100 10397    0 10332  100    65  14552     91 --:--:-- --:--:-- --:--:-- 14623
+* Connection #0 to host mel2039 left intact
+"done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.690478355Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.697241187Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.70407671Z","response":" might","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.710838372Z","response":" need","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.717638484Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.725036767Z","response":" context","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.731845559Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.738641501Z","response":" give","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.745460674Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.752718276Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.759496788Z","response":" accurate","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.76627183Z","response":" answer","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.773046473Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:06.779834375Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1429,4737,1505,1136,29510,1035,7969,1122,1032,27049,29501,10414,3667,29491,4771,29510,29481,1164,3525,1070,1678,1066,12525,1040,8628,2320,29536,29600,1065,27049,29515,781,781,14708,29600,20936,781,1890,1229,1095,29473,29508,29518,29538,29513,1357,1210,1229,1597,1115,1032,2191,29493,4463,29493,5113,29491,781,14708,29600,781,781,28723,29493,1281,1136,29510,1035,3507,1163,1032,3716,11550,1210,5234,29493,2027,1158,10895,29491,3545,1210,8939,29493,1083,2427,1695,1448,3526,1066,2879,1032,1448,11997,5140,29491],"total_duration":708339466,"load_duration":27834339,"prompt_eval_count":13,"prompt_eval_duration":8570023,"eval_count":99,"eval_duration":629189200}
+HTTP Status: 200, Time: 0.710406s
+END_TIME:1762184166.785578326
+DURATION:.720786992
+Request 7 completed in .720786992s
+Client 1 sending request 8 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 8
+  - Timeout: 60 seconds
+START_TIME:1762184167.789984804
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:36:07 GMT
+< Transfer-Encoding: chunked
+< 
+{ [105 bytes data]
+{"model":"mistral","created_at":"2025-11-03T15:36:07.835905368Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.84250196Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.849229312Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.855851964Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.862459056Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.869098799Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.875725831Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.882376913Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.889026425Z","response":" using","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.895810748Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.90246941Z","response":" sort","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.909131652Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.915796004Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.922479347Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.929154549Z","response":" ab","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.935840061Z","response":"bre","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.942542253Z","response":"vi","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.949244525Z","response":"ation","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.955936688Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.96255436Z","response":" If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.971048093Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.977733445Z","response":" meant","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.984398847Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.991054119Z","response":" ask","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:07.997722732Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.004384134Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.011065796Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.017742468Z","response":" function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.024418161Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.031091943Z","response":" here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.037767725Z","response":" is","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.044474527Z","response":" an","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.051188419Z","response":" example","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.057865892Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.064559364Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.071255196Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.077965988Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.084674841Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.091374293Z","response":"javascript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.098104865Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.104808257Z","response":"function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.111519119Z","response":" get","done":false}
+{"model":"mistral","created_a100  4232    0  4167  100    65  12900    201 --:--:-- --:--:-- --:--:-- 13061t":"2025-11-03T15:36:08.118250302Z","response":"Element","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.124958734Z","response":"ById","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.131681306Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.138403239Z","response":"id","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.145166121Z","response":")","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.151879983Z","response":" {","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.158608525Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.165416677Z","response":"   ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.17214193Z","response":" return","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.178869432Z","response":" document","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.187399355Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.194207707Z","response":"getElementById","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.200983309Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.207779402Z","response":"id","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.214598074Z","response":");","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.221436716Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.228258369Z","response":"}","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.235087951Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.241879973Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.248670395Z","response":"//","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.255453767Z","response":" Us","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.26223744Z","response":"age","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.269058322Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.275828954Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.282597687Z","response":"const","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.289383509Z","response":" element","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.296146631Z","response":" =","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.302937053Z","response":" get","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.309690756Z","response":"Element","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.316469268Z","response":"ById","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.32327367Z","response":"('","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.330107783Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.336850205Z","response":"');","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.343638077Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.350431159Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.357191752Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:08.363958874Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1429,4737,1505,1136,29510,1035,2181,1032,3895,1070,3464,1210,1302,2920,5987,1120,29491,1815,1136,5803,1066,2228,1122,1032,27049,1676,29493,2004,1117,1164,3525,29515,781,781,14708,29600,20936,781,3396,1393,3125,8528,29500,1081,29499,1139,781,3055,1372,4016,29491,15545,29500,1081,1112,781,29520,781,781,1189,5315,1233,29515,781,2746,3210,1095,1393,3125,8528,1625,29536,2975,781,14708,29600],"total_duration":568184160,"load_duration":30055580,"prompt_eval_count":100  8334    0  8269  100    65  14507    114 --:--:-- --:--:-- --:--:-- 14595
+* Connection #0 to host mel2039 left intact
+13,"prompt_eval_duration":8580583,"eval_count":79,"eval_duration":497981226}
+HTTP Status: 200, Time: 0.570143s
+END_TIME:1762184168.368686137
+DURATION:.578701333
+Request 8 completed in .578701333s
+Client 1 sending request 9 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 9
+  - Timeout: 60 seconds
+START_TIME:1762184169.373077685
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:36:09 GMT
+< Transfer-Encoding: chunked
+< 
+{ [105 bytes data]
+{"model":"mistral","created_at":"2025-11-03T15:36:09.417021155Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.423612657Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.430340589Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.436978332Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.443669814Z","response":"m","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.450353376Z","response":" here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.456967688Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.463638741Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.470344133Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.477013425Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.483691647Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.490395419Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.497049822Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.503745094Z","response":" are","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.510449116Z","response":" asking","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.517262618Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.52394939Z","response":" some","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.530670063Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.537394235Z","response":" (","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.544026647Z","response":"den","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.55266331Z","response":"oted","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.559394432Z","response":" by","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.566040205Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.572714777Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.579404519Z","response":"$","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.586081911Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.592741833Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.599428266Z","response":").","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.606128558Z","response":" However","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.61288467Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.619601733Z","response":" without","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.646097791Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.662386947Z","response":" specific","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.678949552Z","response":" question","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.685948315Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.693172577Z","response":" context","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.70190946Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.722695997Z","response":" it","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.729846549Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.739432793Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.747512305Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.754373057Z","response":" bit","done":false}
+{"model":"mistral","created_at":"2025100  7646    0  7581  100    65  10216     87 --:--:-- --:--:-- --:--:-- 10290-11-03T15:36:09.76180386Z","response":" challenging","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.768960592Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.776215755Z","response":" provide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.783819657Z","response":" an","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.79103611Z","response":" accurate","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.809961746Z","response":" answer","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.825903071Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.839318456Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.85166604Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.858400312Z","response":"If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.868379756Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.875910078Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.88268609Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.895726524Z","response":" looking","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.903305927Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.910361929Z","response":" general","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.917926492Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.936702778Z","response":" assistance","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.94388198Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.950680663Z","response":" feel","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.966281618Z","response":" free","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.97361909Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.980400982Z","response":" ask","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.989969476Z","response":" about","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:09.997211988Z","response":" functions","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.008984412Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.015785414Z","response":" variables","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.027754589Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.034532721Z","response":" arrays","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.06198038Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.068772312Z","response":" objects","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.083130257Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.089898769Z","response":" loops","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.103817334Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.110596476Z","response":" condition","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.120355409Z","response":"als","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.135856225Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.142656787Z","response":" and","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.150169339Z","response":" other","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.159519722Z","response":" basic","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.18123701Z","response":" concepts","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.194445124Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.203348037Z","response":" If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.21097941Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.217785122Z","response":" have","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.225323344Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.232123867Z","response":" specific","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.238914369Z","response":" problem","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.251812233Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.258594046Z","response":" task","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.274434011Z","response":" in","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.281256363Z","response":" mind","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.288845266Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.295625818Z","response":" please","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.312316574Z","response":" describe","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.324652078Z","response":" it","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.33146391Z","response":" so","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.338981853Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.346327315Z","response":" can","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.353647927Z","response":" help","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.36085445Z","response":" guide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.376095455Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.382879917Z","response":" through","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.39043596Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.397280972Z","response":" solution","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.404497395Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.411959647Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.418829709Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.425635431Z","response":"Here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.440434027Z","response":" is","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.448261589Z","response":" an","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.455154331Z","response":" example","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.462242903Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.469484666Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.478685009Z","response":" simple","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.490732043Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.497551415Z","response":" function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.505220448Z","response":" that","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.51242363Z","response":" calcul","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.522590804Z","response":"ates","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.530187216Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.537077779Z","response":" sum","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.551542183Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.558392006Z","response":" two","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.565612598Z","response":" numbers","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.583931914Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.597945359Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.604765941Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.611602384Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.624822388Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.648672936Z","response":"javascript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.672712254Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.679540866Z","response":"function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.69272629Z","response":" add","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.700393953Z","response":"Num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.724408441Z","response":"bers","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.732061753Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.756148901Z","response":"num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.767367505Z","response":"1","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.78122243Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.788078942Z","response":" num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.795389245Z","response":"2","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.814640021Z","response":")","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.821515373Z","response":" {","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.828746426Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.835602468Z","response":"   ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.845763151Z","response":" return","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.853707424Z","response":" num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.860540666Z","response":"1","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.867427458Z","response":" +","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.874945851Z","response":" num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.881799673Z","response":"2","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.888664586Z","response":";","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.906280162Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.913146484Z","response":"}","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.923023527Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.929886239Z","response":"console","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.937556502Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.944423724Z","response":"log","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.952124827Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.958964609Z","response":"add","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.966273042Z","response":"Num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.973159834Z","response":"bers","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.980022756Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.986858149Z","response":"3","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:10.998160682Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.004993275Z","response":" ","done":false}
+{"mode100 17395    0 17330  100    65   9942     37  0:00:01  0:00:01 --:--:--  9974100 18782    0 18717  100    65  10622     36  0:00:01  0:00:01 --:--:-- 10653
+* Connection #0 to host mel2039 left intact
+l":"mistral","created_at":"2025-11-03T15:36:11.031151403Z","response":"4","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.040196706Z","response":"));","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.047528359Z","response":" //","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.054839151Z","response":" Output","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.086888332Z","response":"s","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.093715224Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.100572276Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.107447339Z","response":"7","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.114361421Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.121327023Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.128190825Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:11.138551359Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1083,29510,29487,2004,1066,2084,29491,1429,4737,1505,1136,1228,7969,1122,1509,27049,1093,2388,5386,1254,1040,2320,29544,29536,29600,1377,3761,29493,2439,1032,3716,3764,1210,3526,29493,1146,29510,29481,1032,3054,15129,1066,3852,1164,11997,5140,29491,781,781,4149,1136,29510,1035,3294,1122,3720,27049,12379,29493,2369,2701,1066,2228,1452,6340,29493,9693,29493,26300,29493,7465,29493,29241,29493,5412,1741,29493,1072,1567,7239,17350,29491,1815,1136,1274,1032,3716,3468,1210,4406,1065,3041,29493,5433,7453,1146,1347,1083,1309,2084,9095,1136,1827,1040,5933,29491,781,781,16191,1117,1164,3525,1070,1032,4356,27049,1676,1137,5668,1770,1040,3416,1070,1757,6319,29515,781,781,14708,29600,20936,781,3396,1735,6186,2659,29500,3343,29508,29493,2843,29518,29499,1139,781,3055,1372,2843,29508,1416,2843,29518,29513,781,29520,781,14892,29491,2350,29500,1756,6186,2659,29500,29538,29493,29473,29549,1858,1357,16753,29481,29515,29473,29555,781,14708,29600],"total_duration":1760207417,"load_duration":28633729,"prompt_eval_count":13,"prompt_eval_duration":8626003,"eval_count":181,"eval_duration":1648977908}
+HTTP Status: 200, Time: 1.762938s
+END_TIME:1762184171.144774962
+DURATION:1.771697277
+Request 9 completed in 1.771697277s
+Client 1 sending request 10 to mel2039:11434...
+Request details:
+  - Model: mistral
+  - Prompt: Hello from client 1, request 10
+  - Timeout: 60 seconds
+START_TIME:1762184172.149520690
+Note: Unnecessary use of -X or --request, POST is already inferred.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 10.3.40.39...
+* TCP_NODELAY set
+* Connected to mel2039 (10.3.40.39) port 11434 (#0)
+> POST /api/generate HTTP/1.1
+> Host: mel2039:11434
+> User-Agent: curl/7.61.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 65
+> 
+} [65 bytes data]
+* upload completely sent off: 65 out of 65 bytes
+< HTTP/1.1 200 OK
+< Content-Type: application/x-ndjson
+< Date: Mon, 03 Nov 2025 15:36:12 GMT
+< Transfer-Encoding: chunked
+< 
+{ [104 bytes data]
+{"model":"mistral","created_at":"2025-11-03T15:36:12.40101712Z","response":" Hello","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.407684692Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.414383585Z","response":" It","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.421016627Z","response":" seems","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.427641129Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.434354271Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.441007054Z","response":"'","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.447678736Z","response":"re","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.454321598Z","response":" asking","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.471598504Z","response":" for","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.478270626Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.484943258Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.49163563Z","response":" (","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.498379342Z","response":"den","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.505089165Z","response":"oted","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.511822857Z","response":" by","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.518973319Z","response":" $","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.525701591Z","response":"j","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.532398464Z","response":")","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.539120476Z","response":" function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.549350999Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.556099802Z","response":" code","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.562965094Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.569643306Z","response":" However","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.576353588Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.583027451Z","response":" I","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.590054683Z","response":" need","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.596726025Z","response":" more","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.603437068Z","response":" context","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.61014377Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.617012952Z","response":" provide","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.623705964Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.630425166Z","response":" helpful","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.637126709Z","response":" response","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.644022661Z","response":".","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.650739913Z","response":" Could","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.657426906Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.664115708Z","response":" please","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.67080573Z","response":" specify","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.677519652Z","response":" what","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.684250544Z","response":" exact","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.690961377Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.697651119Z","response":" function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.704397881Z","response":" or","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.711127063Z","response":" problem","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.717829686Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.724533258Z","response":" are","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.73150403Z","response":" trying","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.738237162Z","response":" to","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.744956385Z","response":" solve","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.751671067Z","response":"?","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.758642569Z","response":" Here","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.767612742Z","response":" is","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.774398214Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.781166157Z","response":" simple","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.788232299Z","response":" example","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.795002861Z","response":" of","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.801782224Z","response":" a","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.808569756Z","response":" JavaScript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.815525618Z","response":" function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.82233073Z","response":" that","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.829144563Z","response":" adds","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.835918295Z","response":" two","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.842889527Z","response":" numbers","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.84965713Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.856419322Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.863232284Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.870239157Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.877061169Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.883848391Z","response":"javascript","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.890693853Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.897398075Z","response":"function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.904217558Z","response":" add","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.91100973Z","response":"Num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.917794762Z","response":"bers","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.924570205Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.931341837Z","response":"num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.938117009Z","response":"1","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.944896221Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.951671294Z","response":" num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.958444336Z","response":"2","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.965269098Z","response":")","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.972026651Z","response":" {","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.978806093Z","response":"\n","done":false}
+{"model":"mistral","cre100 10152    0 10087  100    65  10463     67 --:--:-- --:--:-- --:--:-- 10520ated_at":"2025-11-03T15:36:12.988740546Z","response":"   ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:12.995561028Z","response":" return","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.002578671Z","response":" num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.009426503Z","response":"1","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.016260305Z","response":" +","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.023097507Z","response":" num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.02988755Z","response":"2","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.036664262Z","response":";","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.043453574Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.050289426Z","response":"}","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.057077969Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.063861301Z","response":"``","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.070639423Z","response":"`","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.077473746Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.084250218Z","response":"\n","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.0910291Z","response":"You","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.097804172Z","response":" can","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.104617644Z","response":" call","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.111430247Z","response":" this","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.118210459Z","response":" function","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.124982691Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.131789164Z","response":" the","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.138562046Z","response":" desired","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.145347388Z","response":" arguments","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.1521752Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.158968793Z","response":" like","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.165752085Z","response":" so","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.172540567Z","response":":","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.17930318Z","response":" `","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.186087602Z","response":"add","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.192869934Z","response":"Num","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.199646956Z","response":"bers","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.20909503Z","response":"(","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.215914112Z","response":"3","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.222728904Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.229538716Z","response":" ","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.236395368Z","response":"4","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.243208081Z","response":")","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.250016993Z","response":"`.","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.256851935Z","response":" If","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.263656238Z","response":" you","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.27046017Z","response":" need","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.277306002Z","response":" help","done":100 14300    0 14235  100    65  11922     54  0:00:01  0:00:01 --:--:-- 11976
+* Connection #0 to host mel2039 left intact
+false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.284120355Z","response":" with","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.290929437Z","response":" something","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.297742649Z","response":" different","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.304558111Z","response":",","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.311360884Z","response":" please","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.318175816Z","response":" let","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.324990728Z","response":" me","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.33180303Z","response":" know","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.338615213Z","response":"!","done":false}
+{"model":"mistral","created_at":"2025-11-03T15:36:13.345485855Z","response":"","done":true,"done_reason":"stop","context":[3,29473,23325,1245,4466,29473,29508,29493,2927,1197,29536,4,29473,23325,29576,1429,4737,1505,1136,29510,1035,7969,1122,1032,27049,1093,2388,5386,1254,1197,29536,29499,1676,1210,3464,29491,3761,29493,1083,1695,1448,3526,1066,3852,1032,11633,3667,29491,14723,1136,5433,16527,1535,4227,27049,1676,1210,3468,1136,1228,3710,1066,12817,29572,4771,1117,1032,4356,3525,1070,1032,27049,1676,1137,14401,1757,6319,29515,781,781,14708,29600,20936,781,3396,1735,6186,2659,29500,3343,29508,29493,2843,29518,29499,1139,781,3055,1372,2843,29508,1416,2843,29518,29513,781,29520,781,14708,29600,781,781,2744,1309,1802,1224,1676,1163,1040,12553,7382,29493,1505,1347,29515,2320,1756,6186,2659,29500,29538,29493,29473,29549,29499,10197,1815,1136,1695,2084,1163,2313,2349,29493,5433,2114,1296,1641,29576],"total_duration":1190307297,"load_duration":234243638,"prompt_eval_count":13,"prompt_eval_duration":9818993,"eval_count":137,"eval_duration":888939084}
+HTTP Status: 200, Time: 1.194863s
+END_TIME:1762184173.352466027
+DURATION:1.202945337
+Request 10 completed in 1.202945337s
+Client 1 finished load test

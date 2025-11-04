@@ -16,6 +16,11 @@ from monitor_runner import monitor_runner
 recipe_path = os.path.join(local_dir, 'recipe.yml')
 
 if __name__ == "__main__":
+    # Create organized directory structure
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("scripts", exist_ok=True)
+    os.makedirs("outputs", exist_ok=True)
+    
     # REQUIREMENTS:
     #  PRIMARY THING TO DO:
     #  1. Parse recipe.yml
@@ -25,6 +30,7 @@ if __name__ == "__main__":
     if not os.path.exists(recipe_path):
         print(f"Error: {recipe_path} not found!")
         print("Make sure the local folder structure is correct")
+        # TODO: report this to the user
         sys.exit(1)
     
     try:
@@ -32,6 +38,7 @@ if __name__ == "__main__":
         print(f" Recipe parsed successfully: {recipe}")
     except Exception as e:
         print(f"Error: Failed to parse recipe: {e}")
+        # TODO: report this to the user
         sys.exit(1)
     
     #  1. Start one or more service instances on compute nodes
@@ -40,10 +47,12 @@ if __name__ == "__main__":
     #    1. Gather ip addresses of the services
     #    1. Gather jobids of the services
     print("\nStep 2: Starting service instances...")
-    ip_addresses, job_ids = service_runner()
+    model = (recipe.get("bootstrap") or {}).get("model", "mistral")
+    ip_addresses, job_ids = service_runner(model=model)
     
     if not ip_addresses:
         print("Failed to start services. Exiting.")
+        # TODO: report this to the user
         sys.exit(1)
     
     print(f"Services started on nodes: {ip_addresses}")
@@ -53,10 +62,19 @@ if __name__ == "__main__":
     #    1. Waits for the clients to actually start
     #    1. Send ip addresses to these clients
     print("\nStep 3: Starting client instances...")
-    client_job_ids = client_runner(ip_addresses)
+    # TODO: decide the recipe.yaml format for the benchmark and test it.
+    client_job_ids = client_runner(ip_addresses, template_dir="templates", model=model)
     
     if not client_job_ids:
-        print("Failed to start clients. Exiting.")
+        print("Failed to start clients. Cleaning up services and exiting.")
+        # Best-effort cleanup of services if clients can't start
+        try:
+            import subprocess
+            for jid in job_ids:
+                subprocess.run(["scancel", jid])
+                print(f"Stopped service job {jid}")
+        except Exception as e:
+            print(f"Warning: Failed to cancel some service jobs: {e}")
         sys.exit(1)
     
     print(f"Client job IDs: {client_job_ids}")
@@ -65,7 +83,7 @@ if __name__ == "__main__":
     #    1. Waits for the monitors to actually start
     #    1. Send ip addresses to these monitors
     print("\nStep 4: Starting monitor instances...")
-    monitor_runner(ip_addresses, job_ids + client_job_ids)
+    monitor_runner(ip_addresses, client_job_ids, job_ids)
 
     #  SECONDARY THINGS:
     #  1. List currently active services

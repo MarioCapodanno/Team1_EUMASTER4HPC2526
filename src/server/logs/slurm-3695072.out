@@ -1,0 +1,23 @@
+Date              = Mon Nov  3 16:30:08 CET 2025
+Hostname          = mel2039
+Working Directory = /home/users/u103229/repos/Team1_EUMASTER4HPC2526/src/server
+Ensuring Apptainer image present: ollama_latest.sif
+Starting ollama serve (bind 0.0.0.0:11434)...
+ollama serve PID: 11406
+Waiting for Ollama HTTP endpoint to become ready...
+curl: (7) Failed to connect to localhost port 11434: Connection refused
+curl: (28) Operation timed out after 2001 milliseconds with 0 bytes received
+Ollama HTTP server is ready.
+Pulling model: mistral
+Note: Using OLLAMA_TLS_SKIP_VERIFY=1 to bypass certificate validation
+[?2026h[?25l[1Gpulling manifest ⠋ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠙ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠹ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠸ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠼ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest [K
+pulling f5074b1221da: 100% ▕██████████████████▏ 4.4 GB                         [K
+pulling 43070e2d4e53: 100% ▕██████████████████▏  11 KB                         [K
+pulling 1ff5b64b61b9: 100% ▕██████████████████▏  799 B                         [K
+pulling ed11eda7790d: 100% ▕██████████████████▏   30 B                         [K
+pulling 1064e17101bd: 100% ▕██████████████████▏  487 B                         [K
+verifying sha256 digest [K
+writing manifest [K
+success [K[?25h[?2026l
+✓ Model 'mistral' is available
+Bootstrap complete. Service ready on 0.0.0.0:11434
