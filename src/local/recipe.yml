@@ -6,6 +6,8 @@ bootstrap:
   host: "meluxina"
   # directory in which the bootstrap files will be placed
   working_dir: "bootstrap"
+  # llm model to prepare (will be pulled before serving)
+  model: "mistral"
 
 # TODO
 # BENCHMARK SECTION
