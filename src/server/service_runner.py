@@ -9,7 +9,11 @@ def service_runner(model: str = "mistral"):
     
     # Start Ollama service using bootstrap.sh
     print("Starting Ollama service...")
-    script_path = "../../scripts/bootstrap.sh"
+    
+    # Try different paths for bootstrap.sh (cluster vs local)
+    script_path = "../scripts/bootstrap.sh"
+    if not os.path.exists(script_path):
+        script_path = "../../scripts/bootstrap.sh"
     
     if not os.path.exists(script_path):
         print(f"Error: {script_path} not found!")

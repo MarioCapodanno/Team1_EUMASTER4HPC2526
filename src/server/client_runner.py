@@ -25,14 +25,20 @@ class ClientRunner:
             template_dir: Directory containing Jinja2 templates
             output_dir: Directory to save generated scripts
         """
-        # Resolve template_dir; if not found, try repo-level templates folder
+        # Resolve template_dir; if not found, try different paths
         self.template_dir = Path(template_dir)
         if not self.template_dir.is_dir():
-            repo_templates = Path(__file__).resolve().parents[2] / "templates"
-            if repo_templates.is_dir():
-                self.template_dir = repo_templates
+            # Try parent directory templates (for cluster deployment)
+            parent_templates = Path("..") / "templates"
+            if parent_templates.is_dir():
+                self.template_dir = parent_templates
             else:
-                print(f"Warning: templates dir '{self.template_dir}' not found; proceeding anyway")
+                # Try repo-level templates folder (for local testing)
+                repo_templates = Path(__file__).resolve().parents[2] / "templates"
+                if repo_templates.is_dir():
+                    self.template_dir = repo_templates
+                else:
+                    print(f"Warning: templates dir '{self.template_dir}' not found; proceeding anyway")
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         

@@ -1,0 +1,7 @@
+# Local laptop dependencies (for bench.py)
+pyyaml>=6.0
+fabric>=3.0
+
+# Cluster dependencies (for runner.py on remote cluster)
+# pyyaml>=6.0
+# jinja2>=3.0
