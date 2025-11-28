@@ -1,0 +1,7 @@
+configuration:
+  target: "meluxina" # This is an ssh alias (see ~/.ssh/config)
+
+benchmarks:
+  image: # e.g. Docker image
+  num_clients: # Number of clients to simulate
+  metrics: # List of metrics to collect
