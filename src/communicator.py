@@ -481,11 +481,11 @@ def create_communicator(target: str, method: str = "ssh", **kwargs) -> Communica
     else:
         raise ValueError(f"Unsupported communication method: {method}")
     
-if __name__ == "__main__":
-    # Example usage
+# if __name__ == "__main__":
+#     # Example usage
 
-    communicator = create_communicator("meluxina", method="ssh")
+#     communicator = create_communicator("meluxina", method="ssh")
 
-    with communicator as comm:
-        result = comm.execute_command(command="pwd")
-        print(result)
+#     with communicator as comm:
+#         result = comm.execute_command(command="pwd")
+#         print(result)
