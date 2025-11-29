@@ -10,6 +10,7 @@ the cluster via the Manager class.
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Dict, Any
+from storage import get_storage_manager, StorageManager
 
 @dataclass
 class Service:
@@ -75,7 +76,6 @@ class Service:
             "job_id": self.job_id,
             "hostname": self.hostname,
             "port": self.port,
-            "url": self.get_url(),
             "submit_time": self.submit_time.isoformat() if self.submit_time else None,
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
@@ -84,6 +84,113 @@ class Service:
             "log_file": self.log_file,
             "metadata": self.metadata,
         }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Service":
+        """
+        Create a Service instance from a dictionary.
+        
+        Args:
+            data: Dictionary containing service data
+            
+        Returns:
+            Service instance
+        """
+        # Handle datetime fields
+        for field_name in ['submit_time', 'start_time', 'end_time']:
+            if field_name in data and data[field_name]:
+                if isinstance(data[field_name], str):
+                    data[field_name] = datetime.fromisoformat(data[field_name])
+        
+        # Handle metadata (ensure it's a dict)
+        if 'metadata' in data:
+            if isinstance(data['metadata'], str):
+                import json
+                data['metadata'] = json.loads(data['metadata'])
+            elif data['metadata'] is None:
+                data['metadata'] = {}
+        
+        return cls(**data)
+    
+    def save(self, benchmark_id: str, storage_manager: Optional[StorageManager] = None) -> bool:
+        """
+        Save this service to storage.
+        
+        Args:
+            benchmark_id: Unique benchmark identifier/token
+            storage_manager: Optional storage manager (uses default if not provided)
+            
+        Returns:
+            True if save was successful, False otherwise
+        """
+        if storage_manager is None:
+            storage_manager = get_storage_manager()
+        
+        return storage_manager.save_entity(
+            benchmark_id=benchmark_id,
+            entity_type="service",
+            entity_id=self.name,
+            data=self.to_dict()
+        )
+    
+    @classmethod
+    def load(cls, benchmark_id: str, service_name: str, 
+             storage_manager: Optional[StorageManager] = None) -> Optional["Service"]:
+        """
+        Load a service from storage.
+        
+        Args:
+            benchmark_id: Unique benchmark identifier/token
+            service_name: Name of the service to load
+            storage_manager: Optional storage manager (uses default if not provided)
+            
+        Returns:
+            Service instance or None if not found
+        """
+        if storage_manager is None:
+            storage_manager = get_storage_manager()
+        
+        data = storage_manager.load_entity(
+            benchmark_id=benchmark_id,
+            entity_type="service",
+            entity_id=service_name
+        )
+        
+        if data:
+            return cls.from_dict(data)
+        return None
+    
+    @classmethod
+    def load_all(cls, benchmark_id: str, 
+                 storage_manager: Optional[StorageManager] = None) -> list["Service"]:
+        """
+        Load all services for a benchmark.
+        
+        Args:
+            benchmark_id: Unique benchmark identifier/token
+            storage_manager: Optional storage manager (uses default if not provided)
+            
+        Returns:
+            List of Service instances
+        """
+        if storage_manager is None:
+            storage_manager = get_storage_manager()
+        
+        all_data = storage_manager.load_all_entities(
+            benchmark_id=benchmark_id,
+            entity_type="service"
+        )
+        
+        services = []
+        for data in all_data:
+            # Remove _id field added by storage
+            data.pop('_id', None)
+            try:
+                services.append(cls.from_dict(data))
+            except Exception as e:
+                print(f"Error loading service: {e}")
+        
+        return services
     
     def __str__(self) -> str:
         """String representation of the service."""
