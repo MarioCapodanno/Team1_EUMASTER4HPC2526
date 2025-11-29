@@ -98,3 +98,54 @@ Weekly progress reviews.
 -Guidance on tool selection, deployment, and optimisation.
 -Assistance with debugging, benchmarking analysis, and report writing.
 Preparation for the final defense.
+
+## Current Implementation Status
+
+### Phase 2 Progress: Modular Benchmark Framework
+
+The framework now includes:
+
+1. **Service Module** (`src/service.py`): Manages service deployment and lifecycle
+2. **Client Module** (`src/client.py`): Generic client for running benchmarks against services
+3. **Manager Module** (`src/manager.py`): Orchestrates service and client deployment via Slurm
+4. **Frontend Module** (`src/frontend.py`): CLI interface for deploying and monitoring benchmarks
+5. **Communicator Module** (`src/communicator.py`): SSH-based cluster communication
+6. **Storage Module** (`src/storage.py`): State persistence for benchmarks
+
+### Key Features
+
+- ✅ **Generic Service Deployment**: Deploy any containerized service (inference servers, databases, etc.)
+- ✅ **Generic Client Deployment**: Run customizable benchmark clients with automatic service discovery
+- ✅ **Service Health Verification**: Clients only deploy after verifying services are running
+- ✅ **Separate Sbatch Jobs**: Services and clients run as independent Slurm jobs for scalability
+- ✅ **State Persistence**: All benchmark state saved to storage for monitoring and analysis
+- ✅ **Recipe-based Configuration**: YAML-based configuration for reproducible benchmarks
+
+### Usage
+
+Deploy a benchmark:
+```bash
+python src/frontend.py examples/recipe_test.yaml
+```
+
+Check benchmark status:
+```bash
+python src/frontend.py --id <benchmark_id>
+```
+
+### Example Recipes
+
+- `examples/recipe_test.yaml`: Simple nginx service with echo clients
+- `examples/recipe_vllm.yaml`: vLLM inference server benchmark
+- `examples/recipe_postgres.yaml`: PostgreSQL database benchmark
+- `examples/recipe_chroma.yaml`: Chroma vector database benchmark
+
+See `docs/CLIENT_IMPLEMENTATION.md` for detailed documentation.
+
+### Testing
+
+Run the test suite:
+```bash
+python test_client_module.py
+```
+

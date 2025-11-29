@@ -1,0 +1,14 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "chroma-vectordb"
+  image: "chromadb/chroma:latest"
+  command: "chroma run --host 0.0.0.0 --port 8000"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "03:00:00"
+
+benchmarks:
+  num_clients: 8
+  metrics: ["insert_latency", "query_latency", "similarity_accuracy"]
