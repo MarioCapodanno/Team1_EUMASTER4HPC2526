@@ -1,0 +1,2 @@
+_id,container_image,end_time,hostname,job_id,log_file,metadata,name,node_name,port,start_time,submit_time,working_dir
+ollama-test,ollama/ollama:latest,,,3788837,~/benchmark_test-001/logs/ollama-test_3788837.out,{},ollama-test,,,2025-11-29T13:01:51.844218,2025-11-29T13:01:41.479372,~/benchmark_test-001
