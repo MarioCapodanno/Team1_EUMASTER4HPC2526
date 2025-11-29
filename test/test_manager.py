@@ -84,9 +84,9 @@ def example_load_service():
 
 def example_list_services():
     """Example 3: List all services for a benchmark."""
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 80)
     print("Example 3: List All Services")
-    print("=" * 60)
+    print("=" * 80)
     
     benchmark_id = "test-001"
     
