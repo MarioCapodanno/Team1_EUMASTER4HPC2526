@@ -7,11 +7,14 @@ It produces a structured Python object containing all benchmark configuration in
 
 import argparse
 import sys
+import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
 import yaml
+
+from manager import Manager
 
 @dataclass
 class Configuration:
@@ -129,7 +132,15 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "recipe",
         type=Path,
+        nargs='?',
         help="Path to the recipe YAML configuration file"
+    )
+    
+    parser.add_argument(
+        "--id",
+        dest="benchmark_id",
+        type=str,
+        help="Benchmark ID for loading existing benchmark"
     )
     
     parser.add_argument(
@@ -139,6 +150,27 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
     
     return parser
+
+
+def generate_benchmark_id() -> str:
+    """
+    Generate a unique benchmark ID.
+    
+    Returns:
+        Unique benchmark ID string
+    """
+    # Use a simple incrementing counter stored in a file
+    id_file = Path(".benchmark_id_counter")
+    
+    if id_file.exists():
+        current_id = int(id_file.read_text().strip())
+    else:
+        current_id = 0
+    
+    new_id = current_id + 1
+    id_file.write_text(str(new_id))
+    
+    return str(new_id)
 
 
 def main() -> int:
@@ -152,15 +184,76 @@ def main() -> int:
     args = parser.parse_args()
     
     try:
+        # Mode 1: Load existing benchmark by ID
+        if args.benchmark_id:
+            print(f"Loading benchmark ID: {args.benchmark_id}")
+            # TODO: Implement loading logic
+            # For now, just list the services
+            from service import Service
+            services = Service.load_all(args.benchmark_id)
+            print(f"Found {len(services)} service(s):")
+            for service in services:
+                print(f"  - {service}")
+            return 0
+        
+        # Mode 2: Create new benchmark from recipe
+        if not args.recipe:
+            parser.error("Either provide a recipe file or use --id to load existing benchmark")
+        
         recipe = parse_recipe(args.recipe)
         
         if args.verbose:
             print(f"Successfully parsed recipe from: {args.recipe}")
+            print(recipe)
         
-        print(recipe)
+        # Generate unique benchmark ID
+        benchmark_id = generate_benchmark_id()
+        print(f"\n{'='*60}")
+        print(f"Benchmark ID: {benchmark_id}")
+        print(f"{'='*60}\n")
         
-        # Return the recipe object for further processing
-        return 0
+        # Get target from recipe
+        target = recipe.configuration.target
+        if not target:
+            print("Error: No target specified in recipe configuration", file=sys.stderr)
+            return 1
+        
+        # Get container image from recipe
+        container_image = recipe.benchmarks.image
+        if not container_image:
+            print("Error: No container image specified in benchmarks section", file=sys.stderr)
+            return 1
+        
+        print(f"Target cluster: {target}")
+        print(f"Container image: {container_image}\n")
+        
+        # Create Manager and deploy service
+        with Manager(target=target, benchmark_id=benchmark_id) as manager:
+            print("Connecting to cluster...")
+            
+            # Deploy the service
+            service = manager.deploy_service(
+                service_name=f"service-{benchmark_id}",
+                container_image=container_image,
+                service_command="ollama serve",  # Default command, can be made configurable
+                wait_for_start=True,
+                max_wait_time=300
+            )
+            
+            if service:
+                print(f"\n{'='*60}")
+                print("Service deployed successfully!")
+                print(f"{'='*60}")
+                print(f"Service name: {service.name}")
+                print(f"Job ID: {service.job_id}")
+                print(f"Status: Check with 'python frontend.py --id {benchmark_id}'")
+                print(f"\nTo access this benchmark later:")
+                print(f"  python frontend.py --id {benchmark_id}")
+                print(f"{'='*60}\n")
+                return 0
+            else:
+                print("\nError: Service deployment failed", file=sys.stderr)
+                return 1
         
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -170,6 +263,8 @@ def main() -> int:
         return 2
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         return 3
 
 
