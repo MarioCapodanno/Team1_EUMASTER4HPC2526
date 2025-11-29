@@ -102,7 +102,7 @@ class Manager:
         self,
         service_name: str,
         container_image: str,
-        service_command: str = "serve",
+        service_command: str,
         time_limit: str = "01:00:00",
         partition: str = "gpu",
         account: str = "p200981",
@@ -114,8 +114,8 @@ class Manager:
         
         Args:
             service_name: Name of the service
-            container_image: Container image to run (e.g., "ollama/ollama:latest")
-            service_command: Command to run in the container
+            container_image: Container image to run (e.g., "postgres:latest", "ollama/ollama:latest")
+            service_command: Command to run in the container (e.g., "postgres", "ollama serve")
             time_limit: Time limit for the job
             partition: Slurm partition
             account: Slurm account/project ID
@@ -172,7 +172,7 @@ apptainer exec --nv "$SIF_FILE" {service_command}
         self,
         service_name: str,
         container_image: str,
-        service_command: str = "serve",
+        service_command: str,
         wait_for_start: bool = True,
         max_wait_time: int = 300,
         **sbatch_kwargs
@@ -191,11 +191,11 @@ apptainer exec --nv "$SIF_FILE" {service_command}
         
         Args:
             service_name: Name of the service
-            container_image: Container image to run
-            service_command: Command to run in container
+            container_image: Container image to run (e.g., "postgres:latest", "redis:latest")
+            service_command: Command to run in container (e.g., "postgres", "redis-server")
             wait_for_start: Whether to wait for job to start running
             max_wait_time: Maximum time to wait for job to start (seconds)
-            **sbatch_kwargs: Additional sbatch parameters
+            **sbatch_kwargs: Additional sbatch parameters (partition, num_gpus, time_limit, etc.)
             
         Returns:
             Service object if successful, None otherwise
