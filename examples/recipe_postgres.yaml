@@ -1,0 +1,20 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "postgres-db"
+  image: "postgres:latest"
+  command: "postgres"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "02:00:00"
+
+client:
+  command: "module load PostgreSQL && psql -h $SERVICE_HOSTNAME -U postgres -c 'SELECT version();'"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "00:30:00"
+
+benchmarks:
+  num_clients: 10
+  metrics: ["query_latency", "throughput", "connection_time"]

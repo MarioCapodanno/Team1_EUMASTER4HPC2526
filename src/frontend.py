@@ -23,9 +23,30 @@ class Configuration:
 
 
 @dataclass
+class ServiceConfig:
+    """Service configuration section of the recipe."""
+    name: Optional[str] = None  # Service name
+    image: Optional[str] = None  # Container image
+    command: Optional[str] = None  # Command to run in container
+    partition: str = "gpu"  # Slurm partition
+    num_gpus: int = 1  # Number of GPUs
+    time_limit: str = "01:00:00"  # Job time limit
+    account: Optional[str] = None  # Slurm account (optional)
+
+
+@dataclass
+class ClientConfig:
+    """Client configuration section of the recipe."""
+    command: Optional[str] = None  # Benchmark command to run
+    partition: str = "cpu"  # Slurm partition
+    num_gpus: int = 0  # Number of GPUs
+    time_limit: str = "01:00:00"  # Job time limit
+    account: Optional[str] = None  # Slurm account (optional)
+
+
+@dataclass
 class BenchmarkConfig:
     """Benchmark configuration section of the recipe."""
-    image: Optional[str] = None  # Docker image for the benchmark
     num_clients: Optional[int] = None  # Number of clients to simulate
     metrics: list[str] = field(default_factory=list)  # List of metrics to collect
 
@@ -39,6 +60,8 @@ class Recipe:
     and provides structured access to all configuration parameters.
     """
     configuration: Configuration = field(default_factory=Configuration)
+    service: ServiceConfig = field(default_factory=ServiceConfig)
+    client: ClientConfig = field(default_factory=ClientConfig)
     benchmarks: BenchmarkConfig = field(default_factory=BenchmarkConfig)
     raw_data: dict[str, Any] = field(default_factory=dict)  # Original parsed YAML data
 
@@ -62,11 +85,34 @@ class Recipe:
                 target=config_data.get("target", "")
             )
         
+        # Parse service section
+        if "service" in yaml_data:
+            service_data = yaml_data["service"]
+            recipe.service = ServiceConfig(
+                name=service_data.get("name"),
+                image=service_data.get("image"),
+                command=service_data.get("command"),
+                partition=service_data.get("partition", "gpu"),
+                num_gpus=service_data.get("num_gpus", 1),
+                time_limit=service_data.get("time_limit", "01:00:00"),
+                account=service_data.get("account")
+            )
+        
+        # Parse client section
+        if "client" in yaml_data:
+            client_data = yaml_data["client"]
+            recipe.client = ClientConfig(
+                command=client_data.get("command"),
+                partition=client_data.get("partition", "cpu"),
+                num_gpus=client_data.get("num_gpus", 0),
+                time_limit=client_data.get("time_limit", "01:00:00"),
+                account=client_data.get("account")
+            )
+        
         # Parse benchmarks section
         if "benchmarks" in yaml_data:
             bench_data = yaml_data["benchmarks"]
             recipe.benchmarks = BenchmarkConfig(
-                image=bench_data.get("image"),
                 num_clients=bench_data.get("num_clients"),
                 metrics=bench_data.get("metrics") or []
             )
@@ -79,8 +125,17 @@ class Recipe:
             f"Recipe(\n"
             f"  configuration:\n"
             f"    target: {self.configuration.target}\n"
+            f"  service:\n"
+            f"    name: {self.service.name}\n"
+            f"    image: {self.service.image}\n"
+            f"    command: {self.service.command}\n"
+            f"    partition: {self.service.partition}\n"
+            f"    num_gpus: {self.service.num_gpus}\n"
+            f"  client:\n"
+            f"    command: {self.client.command}\n"
+            f"    partition: {self.client.partition}\n"
+            f"    num_gpus: {self.client.num_gpus}\n"
             f"  benchmarks:\n"
-            f"    image: {self.benchmarks.image}\n"
             f"    num_clients: {self.benchmarks.num_clients}\n"
             f"    metrics: {self.benchmarks.metrics}\n"
             f")"
@@ -187,13 +242,21 @@ def main() -> int:
         # Mode 1: Load existing benchmark by ID
         if args.benchmark_id:
             print(f"Loading benchmark ID: {args.benchmark_id}")
-            # TODO: Implement loading logic
-            # For now, just list the services
+            # List the services and clients
             from service import Service
+            from client import Client
+            
             services = Service.load_all(args.benchmark_id)
-            print(f"Found {len(services)} service(s):")
+            clients = Client.load_all(args.benchmark_id)
+            
+            print(f"\nFound {len(services)} service(s):")
             for service in services:
                 print(f"  - {service}")
+            
+            print(f"\nFound {len(clients)} client(s):")
+            for client in clients:
+                print(f"  - {client}")
+            
             return 0
         
         # Mode 2: Create new benchmark from recipe
@@ -218,42 +281,115 @@ def main() -> int:
             print("Error: No target specified in recipe configuration", file=sys.stderr)
             return 1
         
-        # Get container image from recipe
-        container_image = recipe.benchmarks.image
-        if not container_image:
-            print("Error: No container image specified in benchmarks section", file=sys.stderr)
+        # Get service configuration from recipe
+        service_config = recipe.service
+        if not service_config.image:
+            print("Error: No container image specified in service section", file=sys.stderr)
             return 1
         
+        if not service_config.command:
+            print("Error: No service command specified in service section", file=sys.stderr)
+            return 1
+        
+        # Use service name from config or generate default
+        service_name = service_config.name or f"service-{benchmark_id}"
+        
         print(f"Target cluster: {target}")
-        print(f"Container image: {container_image}\n")
+        print(f"Service: {service_name}")
+        print(f"Container image: {service_config.image}")
+        print(f"Command: {service_config.command}\n")
         
         # Create Manager and deploy service
         with Manager(target=target, benchmark_id=benchmark_id) as manager:
             print("Connecting to cluster...")
             
+            # Prepare sbatch parameters for service
+            sbatch_params = {
+                "partition": service_config.partition,
+                "num_gpus": service_config.num_gpus,
+                "time_limit": service_config.time_limit,
+            }
+            
+            # Add account if specified
+            if service_config.account:
+                sbatch_params["account"] = service_config.account
+            
             # Deploy the service
             service = manager.deploy_service(
-                service_name=f"service-{benchmark_id}",
-                container_image=container_image,
-                service_command="ollama serve",  # Default command, can be made configurable
+                service_name=service_name,
+                container_image=service_config.image,
+                service_command=service_config.command,
                 wait_for_start=True,
-                max_wait_time=300
+                max_wait_time=300,
+                **sbatch_params
             )
             
-            if service:
-                print(f"\n{'='*60}")
-                print("Service deployed successfully!")
-                print(f"{'='*60}")
-                print(f"Service name: {service.name}")
-                print(f"Job ID: {service.job_id}")
-                print(f"Status: Check with 'python frontend.py --id {benchmark_id}'")
-                print(f"\nTo access this benchmark later:")
-                print(f"  python frontend.py --id {benchmark_id}")
-                print(f"{'='*60}\n")
-                return 0
-            else:
+            if not service:
                 print("\nError: Service deployment failed", file=sys.stderr)
                 return 1
+            
+            print(f"\n{'='*60}")
+            print("Service deployed successfully!")
+            print(f"{'='*60}")
+            print(f"Service name: {service.name}")
+            print(f"Job ID: {service.job_id}")
+            print(f"{'='*60}\n")
+            
+            # Deploy clients if configured
+            num_clients = recipe.benchmarks.num_clients
+            client_command = recipe.client.command
+            
+            if num_clients and num_clients > 0 and client_command:
+                print(f"\n{'='*60}")
+                print(f"Deploying {num_clients} benchmark client(s)...")
+                print(f"{'='*60}\n")
+                
+                # Prepare sbatch parameters for clients
+                client_sbatch_params = {
+                    "partition": recipe.client.partition,
+                    "num_gpus": recipe.client.num_gpus,
+                    "time_limit": recipe.client.time_limit,
+                }
+                
+                # Add account if specified
+                if recipe.client.account:
+                    client_sbatch_params["account"] = recipe.client.account
+                elif service_config.account:
+                    # Use service account as fallback
+                    client_sbatch_params["account"] = service_config.account
+                
+                # Deploy multiple clients
+                clients = manager.deploy_multiple_clients(
+                    service_name=service_name,
+                    benchmark_command=client_command,
+                    num_clients=num_clients,
+                    client_name_prefix=f"client-{service_name}",
+                    service=service,
+                    **client_sbatch_params
+                )
+                
+                print(f"\n{'='*60}")
+                print(f"Deployed {len(clients)} client(s) successfully!")
+                print(f"{'='*60}")
+                for client in clients:
+                    print(f"  - {client.name} (Job ID: {client.job_id})")
+                print(f"{'='*60}\n")
+            else:
+                print("\nNo clients configured for deployment.")
+            
+            # Final summary
+            print(f"\n{'='*60}")
+            print("Benchmark Deployment Summary")
+            print(f"{'='*60}")
+            print(f"Benchmark ID: {benchmark_id}")
+            print(f"Service: {service.name} (Job ID: {service.job_id})")
+            if num_clients and num_clients > 0:
+                print(f"Clients: {num_clients} deployed")
+            print(f"\nTo check benchmark status:")
+            print(f"  python frontend.py --id {benchmark_id}")
+            print(f"{'='*60}\n")
+            
+            return 0
         
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)

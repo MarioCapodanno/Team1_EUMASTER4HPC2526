@@ -1,0 +1,20 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "vllm-llama"
+  image: "vllm/vllm-openai:latest"
+  command: "vllm serve --model meta-llama/Llama-2-7b-hf"
+  partition: "gpu"
+  num_gpus: 2
+  time_limit: "04:00:00"
+
+client:
+  command: "python -c 'import requests; import time; start=time.time(); r=requests.post(\"$SERVICE_URL/v1/completions\", json={\"model\":\"meta-llama/Llama-2-7b-hf\",\"prompt\":\"Hello\",\"max_tokens\":50}); print(f\"Latency: {time.time()-start:.2f}s\")'"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "00:30:00"
+
+benchmarks:
+  num_clients: 5
+  metrics: ["latency", "throughput", "tokens_per_second"]

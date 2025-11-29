@@ -1,0 +1,21 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "test-service"
+  image: "nginx:latest"
+  command: "nginx -g 'daemon off;'"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "00:30:00"
+  account: "p200981"
+
+client:
+  command: "echo 'Benchmarking service:' $SERVICE_NAME && sleep 10 && echo 'Benchmark complete'"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "00:15:00"
+
+benchmarks:
+  num_clients: 2
+  metrics: ["response_time", "throughput"]

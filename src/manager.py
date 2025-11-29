@@ -19,6 +19,7 @@ from typing import Optional, List
 # but it works so leave it for now
 from communicator import SSHCommunicator
 from service import Service
+from client import Client
 from storage import get_storage_manager, StorageManager
 
 
@@ -167,6 +168,268 @@ echo "$SLURM_JOB_ID" > {self.working_dir}/{service_name}.jobid
 apptainer exec --nv "$SIF_FILE" {service_command}
 """
         return script
+    
+    def _create_client_sbatch_script(
+        self,
+        client_name: str,
+        service_name: str,
+        service_hostname: Optional[str],
+        service_port: Optional[int],
+        benchmark_command: str,
+        time_limit: str = "01:00:00",
+        partition: str = "cpu",
+        account: str = "p200981",
+        num_nodes: int = 1,
+        num_gpus: int = 0
+    ) -> str:
+        """
+        Create an sbatch script for deploying a benchmark client.
+        
+        Args:
+            client_name: Name of the client
+            service_name: Name of the service being benchmarked
+            service_hostname: Hostname of the service to connect to
+            service_port: Port of the service to connect to
+            benchmark_command: Command to run for benchmarking
+            time_limit: Time limit for the job
+            partition: Slurm partition
+            account: Slurm account/project ID
+            num_nodes: Number of nodes
+            num_gpus: Number of GPUs
+            
+        Returns:
+            Content of the sbatch script
+        """
+        # Build service URL if hostname and port are available
+        service_url = ""
+        if service_hostname and service_port:
+            service_url = f"http://{service_hostname}:{service_port}"
+        
+        script = f"""#!/bin/bash -l
+#SBATCH --job-name={client_name}
+#SBATCH --time={time_limit}
+#SBATCH --qos=default
+#SBATCH --partition={partition}
+#SBATCH --account={account}
+#SBATCH --nodes={num_nodes}
+#SBATCH --ntasks={num_nodes}
+#SBATCH --ntasks-per-node=1"""
+
+        # Only add GPU directive if num_gpus > 0
+        if num_gpus > 0:
+            script += f"""
+#SBATCH --gpus={num_gpus}"""
+
+        script += f"""
+#SBATCH --output={self.abs_working_dir}/logs/{client_name}_%j.out
+#SBATCH --error={self.abs_working_dir}/logs/{client_name}_%j.err
+
+echo "==============================================="
+echo "Client: {client_name}"
+echo "Service: {service_name}"
+echo "Date: $(date)"
+echo "Hostname: $(hostname -s)"
+echo "Working Directory: $(pwd)"
+echo "==============================================="
+
+# Export service connection information
+export SERVICE_NAME="{service_name}"
+export SERVICE_HOSTNAME="{service_hostname or ''}"
+export SERVICE_PORT="{service_port or ''}"
+export SERVICE_URL="{service_url}"
+
+# Write client information to files
+echo "$(hostname)" > {self.working_dir}/{client_name}.hostname
+echo "$SLURM_JOB_ID" > {self.working_dir}/{client_name}.jobid
+
+# Create metrics directory
+mkdir -p {self.working_dir}/metrics
+
+# Run the benchmark command
+echo "Running benchmark command..."
+{benchmark_command}
+
+echo "Benchmark completed at $(date)"
+"""
+        return script
+    
+    def deploy_client(
+        self,
+        client_name: str,
+        service_name: str,
+        benchmark_command: str,
+        service: Optional[Service] = None,
+        wait_for_start: bool = True,
+        max_wait_time: int = 300,
+        **sbatch_kwargs
+    ) -> Optional[Client]:
+        """
+        Deploy a benchmark client to the cluster.
+        
+        This method:
+        1. Verifies the service is running (or uses provided service object)
+        2. Creates an sbatch script for the client
+        3. Uploads it to the cluster
+        4. Submits the job
+        5. Waits for the job to start (optional)
+        6. Creates a Client object
+        7. Saves the client to storage
+        
+        Args:
+            client_name: Name of the client
+            service_name: Name of the service to benchmark
+            benchmark_command: Command to run for benchmarking
+            service: Optional Service object (will be loaded if not provided)
+            wait_for_start: Whether to wait for job to start running
+            max_wait_time: Maximum time to wait for job to start (seconds)
+            **sbatch_kwargs: Additional sbatch parameters (partition, num_gpus, time_limit, etc.)
+            
+        Returns:
+            Client object if successful, None otherwise
+        """
+        self._ensure_connected()
+        
+        print(f"Deploying client: {client_name}")
+        print(f"  Service: {service_name}")
+        print(f"  Benchmark ID: {self.benchmark_id}")
+        
+        # Load service if not provided
+        if service is None:
+            service = self.load_service(service_name)
+            if service is None:
+                print(f"Error: Service '{service_name}' not found")
+                return None
+        
+        # Verify service is running
+        if service.job_id:
+            status = self.get_job_status(service.job_id)
+            if status != "RUNNING":
+                print(f"Error: Service '{service_name}' is not running (status: {status})")
+                return None
+            print(f"✓ Service '{service_name}' is running (Job ID: {service.job_id})")
+        else:
+            print(f"Warning: Service '{service_name}' has no job_id")
+        
+        # Generate sbatch script
+        script_content = self._create_client_sbatch_script(
+            client_name=client_name,
+            service_name=service_name,
+            service_hostname=service.hostname,
+            service_port=service.port,
+            benchmark_command=benchmark_command,
+            **sbatch_kwargs
+        )
+        
+        # Write script locally first
+        local_script_path = Path(f"/tmp/{client_name}_{self.benchmark_id}.sh")
+        local_script_path.write_text(script_content)
+        
+        # Upload script to cluster
+        remote_script_path = f"{self.abs_working_dir}/scripts/{client_name}.sh"
+        print(f"Uploading client sbatch script to: {remote_script_path}")
+        
+        if not self.communicator.upload_file(local_script_path, remote_script_path):
+            print(f"Error: Failed to upload script")
+            return None
+        
+        # Submit job
+        print(f"Submitting client job...")
+        job_id = self.communicator.submit_job(remote_script_path)
+        
+        if not job_id:
+            print(f"Error: Failed to submit job")
+            return None
+        
+        print(f"✓ Job submitted with ID: {job_id}")
+        
+        # Create initial client object
+        client = Client(
+            name=client_name,
+            service_name=service_name,
+            benchmark_command=benchmark_command,
+            job_id=job_id,
+            working_dir=self.working_dir,
+            submit_time=datetime.now(),
+            log_file=f"{self.working_dir}/logs/{client_name}_{job_id}.out",
+            metrics_file=f"{self.working_dir}/metrics/{client_name}_metrics.json"
+        )
+        
+        # Save initial state
+        client.save(self.benchmark_id, self.storage_manager)
+        print(f"✓ Client state saved to storage")
+        
+        # Wait for job to start if requested
+        if wait_for_start:
+            print(f"Waiting for client job to start (max {max_wait_time}s)...")
+            if self._wait_for_job_to_start(job_id, max_wait_time):
+                print(f"✓ Client job is running")
+                
+                # Update client with runtime information
+                client.start_time = datetime.now()
+                
+                # Try to get hostname
+                hostname = self._get_service_hostname(client_name)
+                if hostname:
+                    client.hostname = hostname
+                    client.node_name = hostname
+                    print(f"✓ Client running on: {hostname}")
+                
+                # Save updated state
+                client.save(self.benchmark_id, self.storage_manager)
+            else:
+                print(f"Warning: Client job did not start within {max_wait_time}s")
+        
+        return client
+    
+    def deploy_multiple_clients(
+        self,
+        service_name: str,
+        benchmark_command: str,
+        num_clients: int,
+        client_name_prefix: str = "client",
+        service: Optional[Service] = None,
+        **sbatch_kwargs
+    ) -> List[Client]:
+        """
+        Deploy multiple benchmark clients to the cluster.
+        
+        Args:
+            service_name: Name of the service to benchmark
+            benchmark_command: Command to run for benchmarking
+            num_clients: Number of clients to deploy
+            client_name_prefix: Prefix for client names (will be numbered)
+            service: Optional Service object (will be loaded if not provided)
+            **sbatch_kwargs: Additional sbatch parameters
+            
+        Returns:
+            List of Client objects
+        """
+        clients = []
+        
+        # Load service once if not provided
+        if service is None:
+            service = self.load_service(service_name)
+            if service is None:
+                print(f"Error: Service '{service_name}' not found")
+                return clients
+        
+        print(f"\nDeploying {num_clients} client(s) for service '{service_name}'...")
+        
+        for i in range(num_clients):
+            client_name = f"{client_name_prefix}-{i+1}"
+            client = self.deploy_client(
+                client_name=client_name,
+                service_name=service_name,
+                benchmark_command=benchmark_command,
+                service=service,
+                wait_for_start=False,  # Don't wait for each client individually
+                **sbatch_kwargs
+            )
+            if client:
+                clients.append(client)
+            print()  # Empty line between clients
+        
+        return clients
     
     def deploy_service(
         self,
@@ -388,6 +651,27 @@ apptainer exec --nv "$SIF_FILE" {service_command}
             List of Service objects
         """
         return Service.load_all(self.benchmark_id, self.storage_manager)
+    
+    def load_client(self, client_name: str) -> Optional[Client]:
+        """
+        Load a client from storage.
+        
+        Args:
+            client_name: Name of the client to load
+            
+        Returns:
+            Client object or None if not found
+        """
+        return Client.load(self.benchmark_id, client_name, self.storage_manager)
+    
+    def load_all_clients(self) -> List[Client]:
+        """
+        Load all clients for this benchmark.
+        
+        Returns:
+            List of Client objects
+        """
+        return Client.load_all(self.benchmark_id, self.storage_manager)
     
     def __enter__(self):
         """Context manager entry."""

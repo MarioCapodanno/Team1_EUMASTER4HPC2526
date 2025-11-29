@@ -1,7 +1,0 @@
-configuration:
-  target: "meluxina" # This is an ssh alias (see ~/.ssh/config)
-
-benchmarks:
-  image: "ollama/ollama:latest" # e.g. Docker image
-  num_clients: 1 # Number of clients to simulate
-  metrics: ["latency", "throughput"] # List of metrics to collect

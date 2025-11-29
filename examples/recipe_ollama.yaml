@@ -1,0 +1,58 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "ollama-service"
+  image: "ollama/ollama:latest"
+  command: "/bin/sh -c 'ollama serve > /tmp/ollama.log 2>&1 & sleep 15 && ollama pull llama2 && tail -f /tmp/ollama.log'"
+  partition: "gpu"
+  num_gpus: 1
+  time_limit: "02:00:00"
+  account: "p200981"
+
+client:
+  command: |
+    echo "Checking Ollama service at $SERVICE_URL"
+    echo "Service: $SERVICE_NAME"
+    echo "Hostname: $SERVICE_HOSTNAME"
+    echo ""
+    echo "Waiting for service to be ready..."
+    MAX_RETRIES=30
+    RETRY=0
+    while [ $RETRY -lt $MAX_RETRIES ]; do
+      if curl -s $SERVICE_URL/api/tags > /dev/null 2>&1; then
+        echo "✓ Service is ready!"
+        break
+      fi
+      echo "Service not ready yet, waiting... (attempt $((RETRY+1))/$MAX_RETRIES)"
+      sleep 10
+      RETRY=$((RETRY+1))
+    done
+    if [ $RETRY -eq $MAX_RETRIES ]; then
+      echo "✗ Service did not become ready in time"
+      exit 1
+    fi
+    echo ""
+    echo "Running inference benchmark (5 requests)..."
+    for i in {1..5}; do
+      echo "Request $i:"
+      START=$(date +%s.%N)
+      curl -X POST $SERVICE_URL/api/generate -d '{
+        "model": "llama2",
+        "prompt": "What is artificial intelligence?",
+        "stream": false
+      }' 2>/dev/null | head -c 200
+      END=$(date +%s.%N)
+      DURATION=$(echo "$END - $START" | bc)
+      echo ""
+      echo "Latency: ${DURATION}s"
+      echo "---"
+    done
+    echo "Benchmark complete!"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "00:45:00"
+
+benchmarks:
+  num_clients: 3
+  metrics: ["latency", "throughput", "tokens_per_second"]
