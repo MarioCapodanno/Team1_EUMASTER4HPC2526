@@ -13,7 +13,7 @@ The Manager class is responsible for:
 import time
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 #TODO: maybe here we should import and use the create_communicator factory method
 # but it works so leave it for now
@@ -108,7 +108,8 @@ class Manager:
         partition: str = "gpu",
         account: str = "p200981",
         num_nodes: int = 1,
-        num_gpus: int = 1
+        num_gpus: int = 1,
+        env_vars: Optional[Dict[str, str]] = None
     ) -> str:
         """
         Create an sbatch script for deploying a service.
@@ -126,6 +127,18 @@ class Manager:
         Returns:
             Content of the sbatch script
         """
+        # Build environment variables setup
+        env_vars_setup = ""
+        apptainer_opts = ""
+        
+        if env_vars:
+            env_exports = []
+            for key, value in env_vars.items():
+                env_exports.append(f"export {key}='{value}'")
+            env_vars_setup = "\n".join(env_exports) + "\n"
+            # Add environment variables to Apptainer
+            apptainer_opts = " ".join([f"--env {key}='{value}'" for key, value in env_vars.items()])
+        
         # Simple f-string template for now (can be replaced with Jinja2 later)
         script = f"""#!/bin/bash -l
 #SBATCH --job-name={service_name}
@@ -164,8 +177,11 @@ echo "Running container: $SIF_FILE"
 echo "$(hostname)" > {self.working_dir}/{service_name}.hostname
 echo "$SLURM_JOB_ID" > {self.working_dir}/{service_name}.jobid
 
+# Set up environment variables for the container
+{env_vars_setup}
+
 # Run the service
-apptainer exec --nv "$SIF_FILE" {service_command}
+apptainer exec --nv {apptainer_opts} "$SIF_FILE" {service_command}
 """
         return script
     
@@ -175,6 +191,7 @@ apptainer exec --nv "$SIF_FILE" {service_command}
         service_name: str,
         service_hostname: Optional[str],
         service_port: Optional[int],
+        service_url: str,
         benchmark_command: str,
         time_limit: str = "01:00:00",
         partition: str = "cpu",
@@ -310,12 +327,30 @@ echo "Benchmark completed at $(date)"
         else:
             print(f"Warning: Service '{service_name}' has no job_id")
         
+        # Get fresh hostname from file (in case it wasn't saved to Service object)
+        service_hostname = service.hostname
+        if not service_hostname:
+            # Poll for hostname with exponential backoff
+            print("Waiting for service hostname to be available...")
+            service_hostname = self._wait_for_service_hostname(service_name, max_wait_time=60)
+            if service_hostname:
+                print(f"✓ Retrieved service hostname: {service_hostname}")
+            else:
+                print("Error: Service hostname not available within timeout period")
+                return None
+        
+        # Construct SERVICE_URL in Python to avoid None string issues
+        service_url = ""
+        if service_hostname and service.port:
+            service_url = f"http://{service_hostname}:{service.port}"
+        
         # Generate sbatch script
         script_content = self._create_client_sbatch_script(
             client_name=client_name,
             service_name=service_name,
-            service_hostname=service.hostname,
+            service_hostname=service_hostname,
             service_port=service.port,
+            service_url=service_url,
             benchmark_command=benchmark_command,
             **sbatch_kwargs
         )
@@ -436,6 +471,8 @@ echo "Benchmark completed at $(date)"
         service_name: str,
         container_image: str,
         service_command: str,
+        port: Optional[int] = None,
+        env_vars: Optional[Dict[str, str]] = None,
         wait_for_start: bool = True,
         max_wait_time: int = 300,
         **sbatch_kwargs
@@ -488,6 +525,7 @@ echo "Benchmark completed at $(date)"
             service_name=service_name,
             container_image=container_image,
             service_command=service_command,
+            env_vars=env_vars,
             **sbatch_kwargs
         )
         
@@ -518,6 +556,7 @@ echo "Benchmark completed at $(date)"
             name=service_name,
             container_image=container_image,
             job_id=job_id,
+            port=port,
             working_dir=self.working_dir,
             submit_time=datetime.now(),
             log_file=f"{self.working_dir}/logs/{service_name}_{job_id}.out"
@@ -672,6 +711,43 @@ echo "Benchmark completed at $(date)"
             List of Client objects
         """
         return Client.load_all(self.benchmark_id, self.storage_manager)
+    
+    def _wait_for_service_hostname(self, service_name: str, max_wait_time: int = 60) -> Optional[str]:
+        """
+        Wait for service hostname to become available with exponential backoff.
+        
+        This method polls for the hostname file to exist and contain data,
+        using exponential backoff to handle variable cluster scheduling delays.
+        
+        Args:
+            service_name: Name of the service
+            max_wait_time: Maximum time to wait in seconds
+            
+        Returns:
+            Hostname string or None if timeout reached
+        """
+        hostname_file = f"{self.abs_working_dir}/{service_name}.hostname"
+        start_time = time.time()
+        wait_interval = 1  # Start with 1 second
+        max_interval = 10  # Max 10 seconds between polls
+        
+        while time.time() - start_time < max_wait_time:
+            # Check if file exists and has content
+            result = self.communicator.execute_command(f"test -s {hostname_file} && cat {hostname_file}")
+            if result.success and result.stdout:
+                hostname = result.stdout.strip()
+                if hostname:  # Ensure hostname is not empty
+                    return hostname
+            
+            # Wait with exponential backoff
+            time.sleep(wait_interval)
+            wait_interval = min(wait_interval * 2, max_interval)
+            
+            # Show progress
+            elapsed = int(time.time() - start_time)
+            print(f"  Waiting for hostname... ({elapsed}s elapsed)")
+        
+        return None
     
     def __enter__(self):
         """Context manager entry."""

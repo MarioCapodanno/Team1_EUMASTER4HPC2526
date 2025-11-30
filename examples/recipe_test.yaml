@@ -9,9 +9,14 @@ service:
   num_gpus: 0
   time_limit: "00:30:00"
   account: "p200981"
+  port: 80
 
 client:
-  command: "echo 'Benchmarking service:' $SERVICE_NAME && sleep 10 && echo 'Benchmark complete'"
+  command: |
+    echo 'Testing nginx at:' $SERVICE_URL
+    curl -s $SERVICE_URL | head -5
+    echo 'Service reachable'
+    echo 'Benchmark complete'
   partition: "cpu"
   num_gpus: 0
   time_limit: "00:15:00"

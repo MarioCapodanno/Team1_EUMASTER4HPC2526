@@ -1,0 +1,52 @@
+# =============================================================================
+# Postgres Stress Test Recipe (Simplified)
+# =============================================================================
+# High-load benchmark with configurable insert/select operations.
+# All complex shell scripting is hidden from the user.
+# =============================================================================
+
+configuration:
+  target: "meluxina"
+
+# =============================================================================
+# Service: Postgres Database (Tuned for Performance)
+# =============================================================================
+service:
+  type: "postgres"
+  name: "postgres-stress"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "04:00:00"
+  
+  settings:
+    db_name: "benchmark"
+    auth: "trust"
+    data_dir: "/tmp/pgdata"
+    
+    # Performance tuning (optional)
+    tuning:
+      shared_buffers: "256MB"
+      effective_cache_size: "1GB"
+      maintenance_work_mem: "64MB"
+
+# =============================================================================
+# Client: Stress Test
+# =============================================================================
+client:
+  type: "postgres_stress"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "01:00:00"
+  
+  settings:
+    num_inserts: 10000          # Number of INSERT operations
+    num_selects: 5000           # Number of SELECT operations
+    table_name: "stress_test"   # Table name to use
+    warmup_delay: 5             # Seconds to wait before starting
+
+# =============================================================================
+# Benchmark Configuration
+# =============================================================================
+benchmarks:
+  num_clients: 4                # Run 4 concurrent clients
+  metrics: ["insert_tps", "select_qps", "total_rows"]

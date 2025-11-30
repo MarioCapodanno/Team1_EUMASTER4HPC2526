@@ -1,44 +1,45 @@
 # =============================================================================
-# Ollama Benchmark Recipe (Simplified)
+# ChromaDB Stress Test Recipe (Simplified)
 # =============================================================================
-# Local LLM inference using Ollama.
+# Vector insert and similarity search benchmark.
 # =============================================================================
 
 configuration:
   target: "meluxina"
 
 # =============================================================================
-# Service: Ollama LLM Server
+# Service: ChromaDB Vector Database
 # =============================================================================
 service:
-  type: "ollama"
-  name: "ollama-service"
-  partition: "gpu"
-  num_gpus: 1
-  time_limit: "02:00:00"
-  account: "p200981"
-  
-  settings:
-    model: "llama2"             # Model to pull and serve
-    warmup_seconds: 5           # Wait for server to start
-
-# =============================================================================
-# Client: Smoke Test
-# =============================================================================
-client:
-  type: "ollama_smoke"
+  type: "chroma"
+  name: "chroma-stress"
   partition: "cpu"
   num_gpus: 0
-  time_limit: "00:45:00"
+  time_limit: "04:00:00"
   
   settings:
-    model: "llama2"
-    num_requests: 5             # Number of inference requests
-    max_retries: 30             # Max retries waiting for service
+    host: "0.0.0.0"
+    port: 8000
+
+# =============================================================================
+# Client: Stress Test
+# =============================================================================
+client:
+  type: "chroma_stress"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "02:00:00"
+  
+  settings:
+    num_vectors: 100            # Number of vectors to insert (curl-based, keep small)
+    dim: 64                     # Vector dimension
+    num_queries: 50             # Number of similarity queries
+    top_k: 5                    # Top-K results per query
+    warmup_delay: 5             # Seconds to wait before starting
 
 # =============================================================================
 # Benchmark Configuration
 # =============================================================================
 benchmarks:
-  num_clients: 2
-  metrics: ["latency", "throughput"]
+  num_clients: 4
+  metrics: ["insert_vps", "query_qps"]
