@@ -8,9 +8,14 @@ service:
   partition: "cpu"
   num_gpus: 0
   time_limit: "02:00:00"
+  port: 5432
+  env:
+    POSTGRES_HOST_AUTH_METHOD: "trust"
+    POSTGRES_USER: "postgres"
+    POSTGRES_DB: "benchmark"
 
 client:
-  command: "module load PostgreSQL && psql -h $SERVICE_HOSTNAME -U postgres -c 'SELECT version();'"
+  command: "module load PostgreSQL && psql -h $SERVICE_HOSTNAME -p $SERVICE_PORT -U postgres -d benchmark -c 'SELECT version();'"
   partition: "cpu"
   num_gpus: 0
   time_limit: "00:30:00"
