@@ -32,6 +32,8 @@ class ServiceConfig:
     num_gpus: int = 1  # Number of GPUs
     time_limit: str = "01:00:00"  # Job time limit
     account: Optional[str] = None  # Slurm account (optional)
+    port: Optional[int] = None  # Service port (for SERVICE_URL construction)
+    env: Optional[Dict[str, str]] = None  # Environment variables for container
 
 
 @dataclass
@@ -95,7 +97,9 @@ class Recipe:
                 partition=service_data.get("partition", "gpu"),
                 num_gpus=service_data.get("num_gpus", 1),
                 time_limit=service_data.get("time_limit", "01:00:00"),
-                account=service_data.get("account")
+                account=service_data.get("account"),
+                port=service_data.get("port"),
+                env=service_data.get("env")
             )
         
         # Parse client section
@@ -315,10 +319,14 @@ def main() -> int:
                 sbatch_params["account"] = service_config.account
             
             # Deploy the service
+            print(f"DEBUG: service_config.port = {service_config.port}")
+            print(f"DEBUG: service_config.env = {service_config.env}")
             service = manager.deploy_service(
                 service_name=service_name,
                 container_image=service_config.image,
                 service_command=service_config.command,
+                port=service_config.port,
+                env_vars=service_config.env,
                 wait_for_start=True,
                 max_wait_time=300,
                 **sbatch_params

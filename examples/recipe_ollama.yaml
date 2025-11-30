@@ -9,12 +9,14 @@ service:
   num_gpus: 1
   time_limit: "02:00:00"
   account: "p200981"
+  port: 11434
 
 client:
   command: |
     echo "Checking Ollama service at $SERVICE_URL"
     echo "Service: $SERVICE_NAME"
     echo "Hostname: $SERVICE_HOSTNAME"
+    echo "Port: $SERVICE_PORT"
     echo ""
     echo "Waiting for service to be ready..."
     MAX_RETRIES=30
