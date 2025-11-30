@@ -1,25 +1,45 @@
+# =============================================================================
+# Postgres Benchmark Recipe (Simplified)
+# =============================================================================
+# This recipe uses the "type" field to automatically generate commands.
+# Users only need to configure high-level settings.
+# =============================================================================
+
 configuration:
   target: "meluxina"
 
+# =============================================================================
+# Service: Postgres Database
+# =============================================================================
 service:
+  type: "postgres"              # Automatically generates startup command
   name: "postgres-db"
-  image: "postgres:latest"
-  command: "postgres"
   partition: "cpu"
   num_gpus: 0
   time_limit: "02:00:00"
-  port: 5432
-  env:
-    POSTGRES_HOST_AUTH_METHOD: "trust"
-    POSTGRES_USER: "postgres"
-    POSTGRES_DB: "benchmark"
+  
+  # User-friendly settings (no shell commands needed!)
+  settings:
+    db_name: "benchmark"        # Database name to create
+    auth: "trust"               # Authentication method
+    data_dir: "/tmp/pgdata"     # Data directory
 
+# =============================================================================
+# Client: Smoke Test
+# =============================================================================
 client:
-  command: "module load PostgreSQL && psql -h $SERVICE_HOSTNAME -p $SERVICE_PORT -U postgres -d benchmark -c 'SELECT version();'"
+  type: "postgres_smoke"        # Simple connectivity test
   partition: "cpu"
   num_gpus: 0
   time_limit: "00:30:00"
+  
+  settings:
+    query: "SELECT version();"  # Query to run
+    warmup_delay: 5             # Seconds to wait before connecting
 
+# =============================================================================
+# Benchmark Configuration
+# =============================================================================
 benchmarks:
-  num_clients: 10
-  metrics: ["query_latency", "throughput", "connection_time"]
+  num_clients: 1
+  metrics: ["query_latency", "connection_time"]

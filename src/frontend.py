@@ -10,11 +10,21 @@ import sys
 import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import yaml
 
 from manager import Manager
+from command_builders import (
+    build_service_command,
+    build_client_command,
+    get_default_image,
+    get_default_port,
+    get_default_env,
+    validate_service_type,
+    validate_client_type,
+    validate_settings,
+)
 
 @dataclass
 class Configuration:
@@ -26,8 +36,10 @@ class Configuration:
 class ServiceConfig:
     """Service configuration section of the recipe."""
     name: Optional[str] = None  # Service name
+    type: Optional[str] = None  # Service type (e.g., "postgres", "chroma", "vllm")
     image: Optional[str] = None  # Container image
     command: Optional[str] = None  # Command to run in container
+    settings: Optional[Dict[str, Any]] = None  # Type-specific settings
     partition: str = "gpu"  # Slurm partition
     num_gpus: int = 1  # Number of GPUs
     time_limit: str = "01:00:00"  # Job time limit
@@ -39,7 +51,9 @@ class ServiceConfig:
 @dataclass
 class ClientConfig:
     """Client configuration section of the recipe."""
+    type: Optional[str] = None  # Client type (e.g., "postgres_smoke", "chroma_stress")
     command: Optional[str] = None  # Benchmark command to run
+    settings: Optional[Dict[str, Any]] = None  # Type-specific settings
     partition: str = "cpu"  # Slurm partition
     num_gpus: int = 0  # Number of GPUs
     time_limit: str = "01:00:00"  # Job time limit
@@ -90,23 +104,58 @@ class Recipe:
         # Parse service section
         if "service" in yaml_data:
             service_data = yaml_data["service"]
+            service_type = service_data.get("type")
+            settings = service_data.get("settings", {})
+            
+            # Validate type and settings if specified
+            if service_type:
+                validate_service_type(service_type)
+                validate_settings(settings, context="service")
+            
+            # Get command: use type-based builder if type is specified, else use raw command
+            command = service_data.get("command")
+            if service_type and not command:
+                command = build_service_command(service_type, settings)
+            
+            # Get defaults based on type
+            image = service_data.get("image") or (get_default_image(service_type) if service_type else None)
+            port = service_data.get("port") or (get_default_port(service_type) if service_type else None)
+            env = service_data.get("env") or (get_default_env(service_type, settings) if service_type else None)
+            
             recipe.service = ServiceConfig(
                 name=service_data.get("name"),
-                image=service_data.get("image"),
-                command=service_data.get("command"),
+                type=service_type,
+                image=image,
+                command=command,
+                settings=settings,
                 partition=service_data.get("partition", "gpu"),
                 num_gpus=service_data.get("num_gpus", 1),
                 time_limit=service_data.get("time_limit", "01:00:00"),
                 account=service_data.get("account"),
-                port=service_data.get("port"),
-                env=service_data.get("env")
+                port=port,
+                env=env
             )
         
         # Parse client section
         if "client" in yaml_data:
             client_data = yaml_data["client"]
+            client_type = client_data.get("type")
+            settings = client_data.get("settings", {})
+            
+            # Validate type and settings if specified
+            if client_type:
+                validate_client_type(client_type)
+                validate_settings(settings, context="client")
+            
+            # Get command: use type-based builder if type is specified, else use raw command
+            command = client_data.get("command")
+            if client_type and not command:
+                command = build_client_command(client_type, settings)
+            
             recipe.client = ClientConfig(
-                command=client_data.get("command"),
+                type=client_type,
+                command=command,
+                settings=settings,
                 partition=client_data.get("partition", "cpu"),
                 num_gpus=client_data.get("num_gpus", 0),
                 time_limit=client_data.get("time_limit", "01:00:00"),
@@ -319,8 +368,6 @@ def main() -> int:
                 sbatch_params["account"] = service_config.account
             
             # Deploy the service
-            print(f"DEBUG: service_config.port = {service_config.port}")
-            print(f"DEBUG: service_config.env = {service_config.env}")
             service = manager.deploy_service(
                 service_name=service_name,
                 container_image=service_config.image,

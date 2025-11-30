@@ -1,21 +1,38 @@
+# =============================================================================
+# ChromaDB Benchmark Recipe (Simplified)
+# =============================================================================
+# Vector database benchmark with simple healthcheck.
+# =============================================================================
+
 configuration:
   target: "meluxina"
 
+# =============================================================================
+# Service: ChromaDB Vector Database
+# =============================================================================
 service:
+  type: "chroma"
   name: "chroma-vectordb"
-  image: "chromadb/chroma:latest"
-  command: "chroma run --host 0.0.0.0 --port 8000"
   partition: "cpu"
   num_gpus: 0
   time_limit: "03:00:00"
-  port: 8000
+  
+  settings:
+    host: "0.0.0.0"
+    port: 8000
 
+# =============================================================================
+# Client: Healthcheck
+# =============================================================================
 client:
-  command: "python3 -c 'import chromadb; import time; import os; import numpy as np; url=os.environ.get(\"SERVICE_URL\"); hostname, port = url.replace(\"http://\", \"\").split(\":\") if url else (\"localhost\", 8000); client = chromadb.HttpClient(host=hostname, port=int(port)); collection = client.create_collection(\"test_collection\"); start=time.time(); collection.add(embeddings=[[1.1, 2.2, 3.3]], ids=[\"id1\"]); print(f\"Insert Latency: {time.time()-start:.4f}s\")'"
+  type: "chroma_healthcheck"
   partition: "cpu"
   num_gpus: 0
   time_limit: "00:30:00"
 
+# =============================================================================
+# Benchmark Configuration
+# =============================================================================
 benchmarks:
-  num_clients: 8
-  metrics: ["insert_latency", "query_latency", "similarity_accuracy"]
+  num_clients: 2
+  metrics: ["response_time"]
