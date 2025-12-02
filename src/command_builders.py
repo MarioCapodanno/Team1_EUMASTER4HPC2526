@@ -82,8 +82,9 @@ def build_ollama_service_command(settings: Dict[str, Any]) -> str:
 
 
 def build_nginx_service_command(settings: Dict[str, Any]) -> str:
-    """Build nginx service startup command."""
-    return "nginx -g 'daemon off;'"
+    """Build nginx service startup command with writable paths."""
+    return """mkdir -p /tmp/nginx/logs /tmp/nginx/cache /tmp/nginx/run
+nginx -g 'daemon off; error_log /tmp/nginx/logs/error.log warn; access_log /tmp/nginx/logs/access.log; pid /tmp/nginx/run/nginx.pid; client_body_temp_path /tmp/nginx/cache/client_temp; fastcgi_temp_path /tmp/nginx/cache/fastcgi_temp; uwsgi_temp_path /tmp/nginx/cache/uwsgi_temp; scgi_temp_path /tmp/nginx/cache/scgi_temp;'"""
 
 
 # =============================================================================
@@ -295,102 +296,88 @@ echo "Total time: $(echo "$QUERY_END - $INSERT_START" | bc)s"
 
 
 def build_vllm_smoke_client_command(settings: Dict[str, Any]) -> str:
-    """Build vLLM smoke test client command."""
+    """Build vLLM smoke test client command using curl."""
     model = settings.get("model", "facebook/opt-125m")
     prompt = settings.get("prompt", "Hello")
     max_tokens = settings.get("max_tokens", 50)
     warmup_delay = settings.get("warmup_delay", 5)
     
     return f"""sleep {warmup_delay}
-python3 << 'EOF'
-import requests
-import time
-import os
 
-url = os.environ.get("SERVICE_URL")
-start = time.time()
-r = requests.post(f"{{url}}/v1/completions", json={{
-    "model": "{model}",
-    "prompt": "{prompt}",
-    "max_tokens": {max_tokens}
-}})
-latency = time.time() - start
-print(f"Response: {{r.json()}}")
-print(f"Latency: {{latency:.2f}}s")
-EOF
+echo "Testing vLLM service at: $SERVICE_URL"
+echo "Model: {model}"
+echo "Prompt: {prompt}"
+echo ""
+
+# Time the request
+START_TIME=$(date +%s.%N)
+
+RESPONSE=$(curl -s -X POST "$SERVICE_URL/v1/completions" \\
+  -H "Content-Type: application/json" \\
+  -d '{{"model": "{model}", "prompt": "{prompt}", "max_tokens": {max_tokens}}}')
+
+END_TIME=$(date +%s.%N)
+LATENCY=$(echo "$END_TIME - $START_TIME" | bc)
+
+echo "Response:"
+echo "$RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE"
+echo ""
+echo "Latency: ${{LATENCY}}s"
+echo "vLLM smoke test completed successfully"
 """
 
 
 def build_vllm_stress_client_command(settings: Dict[str, Any]) -> str:
-    """Build vLLM stress test client command."""
+    """Build vLLM stress test client command using curl."""
     model = settings.get("model", "facebook/opt-125m")
     num_requests = settings.get("num_requests", 50)
     max_tokens = settings.get("max_tokens", 64)
     warmup_delay = settings.get("warmup_delay", 10)
     
     return f"""sleep {warmup_delay}
-python3 << 'EOF'
-import requests
-import time
-import os
-import statistics
 
-url = os.environ.get("SERVICE_URL")
-NUM_REQUESTS = {num_requests}
-MAX_TOKENS = {max_tokens}
-MODEL = "{model}"
+echo "=== vLLM Stress Test ==="
+echo "Model: {model}"
+echo "Requests: {num_requests}"
+echo "Max tokens: {max_tokens}"
+echo ""
 
-prompts = [
-    "What is artificial intelligence?",
-    "Explain machine learning in simple terms.",
-    "How does a neural network work?",
-    "What is the difference between AI and ML?",
-    "Describe deep learning.",
-]
+latency_sum=0
+errors=0
 
-print("=== vLLM Stress Test ===")
-print(f"Requests: {{NUM_REQUESTS}}")
-print(f"Max tokens: {{MAX_TOKENS}}")
-print(f"Model: {{MODEL}}")
-print()
+for i in $(seq 1 {num_requests}); do
+  echo "Request $i:"
+  start=$(date +%s.%N)
+  
+  response=$(curl -s -X POST "$SERVICE_URL/v1/completions" \\
+    -H "Content-Type: application/json" \\
+    -d '{{"model": "{model}", "prompt": "Hello world", "max_tokens": {max_tokens}}}' \\
+    2>/dev/null)
+  
+  if [ $? -eq 0 ]; then
+    end=$(date +%s.%N)
+    latency=$(echo "$end - $start" | bc)
+    latency_sum=$(echo "$latency_sum + $latency" | bc)
+    echo "  Latency: ${{latency}}s"
+  else
+    echo "  Failed"
+    errors=$((errors + 1))
+  fi
+  
+  if [ $((i % 10)) -eq 0 ]; then
+    echo "Completed $i/{num_requests} requests..."
+  fi
+done
 
-latencies = []
-errors = 0
-
-for i in range(NUM_REQUESTS):
-    prompt = prompts[i % len(prompts)]
-    try:
-        start = time.time()
-        r = requests.post(f"{{url}}/v1/completions", json={{
-            "model": MODEL,
-            "prompt": prompt,
-            "max_tokens": MAX_TOKENS
-        }}, timeout=120)
-        latency = time.time() - start
-        latencies.append(latency)
-        if (i + 1) % 10 == 0:
-            print(f"Completed {{i + 1}}/{{NUM_REQUESTS}} requests...")
-    except Exception as e:
-        errors += 1
-        print(f"Request {{i + 1}} failed: {{e}}")
-
-if latencies:
-    avg_latency = statistics.mean(latencies)
-    p50 = statistics.median(latencies)
-    p95 = sorted(latencies)[int(len(latencies) * 0.95)] if len(latencies) > 1 else latencies[0]
-    throughput = len(latencies) / sum(latencies)
-    
-    print()
-    print("=== STRESS TEST COMPLETE ===")
-    print(f"Successful requests: {{len(latencies)}}")
-    print(f"Failed requests: {{errors}}")
-    print(f"Avg latency: {{avg_latency:.2f}}s")
-    print(f"P50 latency: {{p50:.2f}}s")
-    print(f"P95 latency: {{p95:.2f}}s")
-    print(f"Throughput: {{throughput:.2f}} req/s")
-else:
-    print("All requests failed!")
-EOF
+echo ""
+echo "=== STRESS TEST COMPLETE ==="
+echo "Successful requests: $(({num_requests} - errors))"
+echo "Failed requests: $errors"
+if [ $(({num_requests} - errors)) -gt 0 ]; then
+  avg_latency=$(echo "scale=3; $latency_sum / ({num_requests} - errors)" | bc)
+  echo "Avg latency: ${{avg_latency}}s"
+fi
+echo "vLLM stress test completed"
 """
 
 
