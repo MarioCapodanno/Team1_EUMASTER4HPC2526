@@ -5,8 +5,12 @@ fabric>=3.0.0          # SSH communication with cluster
 paramiko>=3.0.0        # SSH protocol implementation (used by fabric)
 pyyaml>=6.0            # YAML recipe parsing
 
+# Web UI
+flask>=3.0.0           # Lightweight web UI (Python 3.14 compatible)
+jinja2>=3.1.0          # Template engine for Flask
+# streamlit>=1.28.0    # Alternative UI (requires Python <3.14)
+
 # Optional: for future enhancements
-# streamlit>=1.28.0    # Web UI (optional)
 # gradio>=4.0.0        # Alternative Web UI (optional)
 # matplotlib>=3.7.0    # Charts in reports (optional)
 # pandas>=2.0.0        # Data analysis (optional)
