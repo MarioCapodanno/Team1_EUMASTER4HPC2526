@@ -3,14 +3,17 @@ Frontend module for the AI Factory Benchmarking Framework.
 
 This module handles command-line argument parsing and recipe YAML configuration loading.
 It produces a structured Python object containing all benchmark configuration information.
+Now includes an interactive CLI UI for managing benchmarks.
 """
 
 import argparse
 import sys
-import secrets
+import os
+import time
+import glob
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import yaml
 
@@ -25,6 +28,18 @@ from command_builders import (
     validate_client_type,
     validate_settings,
 )
+from storage import (
+    list_all_benchmarks,
+    get_benchmark_summary,
+    format_benchmark_table,
+    format_benchmark_summary,
+)
+from monitor import (
+    BenchmarkMetrics,
+    MetricsCollector,
+    format_metrics_report,
+)
+from health import check_http_health, wait_for_service_healthy
 
 @dataclass
 class Configuration:
@@ -234,7 +249,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="benchmark-frontend",
         description="AI Factory Benchmarking Framework Frontend",
-        epilog="Example: python frontend.py recipe.yaml"
+        epilog="Example: python frontend.py recipe.yaml\n         python frontend.py --ui"
     )
     
     parser.add_argument(
@@ -245,10 +260,64 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
     
     parser.add_argument(
+        "--ui",
+        action="store_true",
+        help="Launch interactive UI mode"
+    )
+    
+    parser.add_argument(
         "--id",
         dest="benchmark_id",
         type=str,
         help="Benchmark ID for loading existing benchmark"
+    )
+    
+    parser.add_argument(
+        "--list", "--list-benchmarks",
+        dest="list_benchmarks",
+        action="store_true",
+        help="List all benchmarks"
+    )
+    
+    parser.add_argument(
+        "--summary",
+        type=str,
+        metavar="BENCHMARK_ID",
+        help="Show summary for a benchmark"
+    )
+    
+    parser.add_argument(
+        "--stop",
+        type=str,
+        metavar="BENCHMARK_ID",
+        help="Stop all jobs for a benchmark"
+    )
+    
+    parser.add_argument(
+        "--logs",
+        type=str,
+        metavar="BENCHMARK_ID",
+        help="Show logs for a benchmark"
+    )
+    
+    parser.add_argument(
+        "--watch",
+        type=str,
+        metavar="BENCHMARK_ID",
+        help="Watch live status for a benchmark"
+    )
+    
+    parser.add_argument(
+        "--metrics",
+        type=str,
+        metavar="BENCHMARK_ID",
+        help="Collect and show metrics for a benchmark"
+    )
+    
+    parser.add_argument(
+        "--web",
+        action="store_true",
+        help="Launch web UI (requires streamlit)"
     )
     
     parser.add_argument(
@@ -281,46 +350,239 @@ def generate_benchmark_id() -> str:
     return str(new_id)
 
 
-def main() -> int:
-    """
-    Main entry point for the frontend.
+# =============================================================================
+# INTERACTIVE UI
+# =============================================================================
+
+def clear_screen():
+    """Clear the terminal screen."""
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def print_header():
+    """Print the application header."""
+    print("\n" + "=" * 60)
+    print("   AI Factory Benchmarking Framework")
+    print("   MeluXina Supercomputer")
+    print("=" * 60 + "\n")
+
+
+def print_main_menu():
+    """Print the main menu options."""
+    print("\nMain Menu:")
+    print("-" * 30)
+    print("  [1] Run a recipe")
+    print("  [2] List benchmarks")
+    print("  [3] Show benchmark summary")
+    print("  [4] Watch benchmark status")
+    print("  [5] Stop a benchmark")
+    print("  [6] Show logs")
+    print("  [q] Quit")
+    print("-" * 30)
+
+
+def get_available_recipes() -> List[Path]:
+    """Find all available recipe files in examples directory."""
+    examples_dir = Path("examples")
+    if not examples_dir.exists():
+        return []
+    recipes = list(examples_dir.glob("recipe_*.yaml"))
+    return sorted(recipes)
+
+
+def ui_run_recipe() -> Optional[int]:
+    """Interactive recipe runner. Returns benchmark ID if successful."""
+    recipes = get_available_recipes()
     
-    Returns:
-        Exit code (0 for success, non-zero for errors)
-    """
-    parser = create_argument_parser()
-    args = parser.parse_args()
+    if not recipes:
+        print("\n❌ No recipes found in examples/ directory")
+        return None
+    
+    print("\nAvailable Recipes:")
+    print("-" * 50)
+    for i, recipe in enumerate(recipes, 1):
+        # Extract a friendly name from the recipe filename
+        name = recipe.stem.replace("recipe_", "").replace("_", " ").title()
+        print(f"  [{i}] {name:<25} ({recipe})")
+    print("  [0] Cancel")
+    print("-" * 50)
     
     try:
-        # Mode 1: Load existing benchmark by ID
-        if args.benchmark_id:
-            print(f"Loading benchmark ID: {args.benchmark_id}")
-            # List the services and clients
-            from service import Service
-            from client import Client
-            
-            services = Service.load_all(args.benchmark_id)
-            clients = Client.load_all(args.benchmark_id)
-            
-            print(f"\nFound {len(services)} service(s):")
-            for service in services:
-                print(f"  - {service}")
-            
-            print(f"\nFound {len(clients)} client(s):")
-            for client in clients:
-                print(f"  - {client}")
-            
-            return 0
+        choice = input("\nSelect recipe: ").strip()
+        if choice == "0" or choice.lower() == "q":
+            return None
         
-        # Mode 2: Create new benchmark from recipe
-        if not args.recipe:
-            parser.error("Either provide a recipe file or use --id to load existing benchmark")
-        
-        recipe = parse_recipe(args.recipe)
-        
-        if args.verbose:
-            print(f"Successfully parsed recipe from: {args.recipe}")
-            print(recipe)
+        idx = int(choice) - 1
+        if 0 <= idx < len(recipes):
+            recipe_path = recipes[idx]
+            print(f"\n▶ Running recipe: {recipe_path}")
+            
+            # Run the benchmark and capture the ID
+            result = run_benchmark_from_recipe(recipe_path)
+            return result
+        else:
+            print("Invalid selection")
+            return None
+    except ValueError:
+        print("Invalid input")
+        return None
+
+
+def ui_list_benchmarks():
+    """Show list of all benchmarks."""
+    print("\n")
+    benchmarks = list_all_benchmarks()
+    print(format_benchmark_table(benchmarks))
+    print()
+
+
+def ui_show_summary():
+    """Show detailed summary for a benchmark."""
+    bid = input("\nEnter benchmark ID: ").strip()
+    if not bid:
+        return
+    
+    summary = get_benchmark_summary(bid)
+    if summary:
+        print(format_benchmark_summary(summary))
+    else:
+        print(f"\n❌ Benchmark {bid} not found")
+
+
+def ui_watch_status():
+    """Watch live status of a benchmark."""
+    bid = input("\nEnter benchmark ID to watch: ").strip()
+    if not bid:
+        return
+    
+    summary = get_benchmark_summary(bid)
+    if not summary:
+        print(f"\n❌ Benchmark {bid} not found")
+        return
+    
+    print(f"\n👁 Watching benchmark {bid} (Ctrl+C to stop)...\n")
+    
+    try:
+        with Manager(target="meluxina", benchmark_id=bid) as manager:
+            while True:
+                status = manager.get_benchmark_status()
+                
+                # Clear line and print status
+                print(f"\r[{time.strftime('%H:%M:%S')}] ", end="")
+                
+                # Services
+                for svc in status['services']:
+                    state = svc['status']
+                    icon = "✓" if state == "COMPLETED" else ("▶" if state == "RUNNING" else "⏳")
+                    print(f"Service: {icon} {state}  ", end="")
+                
+                # Clients summary
+                client_states = [c['status'] for c in status['clients']]
+                running = client_states.count('RUNNING')
+                completed = client_states.count('COMPLETED')
+                pending = client_states.count('PENDING')
+                total = len(client_states)
+                
+                if total > 0:
+                    print(f"Clients: {completed}/{total} done, {running} running, {pending} pending", end="")
+                
+                # Check if all done
+                all_terminal = all(s in ['COMPLETED', 'FAILED', 'CANCELLED'] 
+                                   for s in [svc['status'] for svc in status['services']] + client_states)
+                
+                if all_terminal:
+                    print("\n\n✓ All jobs completed!")
+                    break
+                
+                print("", flush=True)
+                time.sleep(5)
+                
+    except KeyboardInterrupt:
+        print("\n\nStopped watching.")
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+
+
+def ui_stop_benchmark():
+    """Stop all jobs for a benchmark."""
+    # Show recent benchmarks first
+    benchmarks = list_all_benchmarks()[:5]
+    if benchmarks:
+        print("\nRecent benchmarks:")
+        for b in benchmarks:
+            print(f"  [{b.benchmark_id}] {b.service_name or '?'}")
+    
+    bid = input("\nEnter benchmark ID to stop: ").strip()
+    if not bid:
+        return
+    
+    confirm = input(f"Stop all jobs for benchmark {bid}? [y/N]: ").strip().lower()
+    if confirm != 'y':
+        print("Cancelled.")
+        return
+    
+    print(f"\n⏹ Stopping benchmark {bid}...")
+    
+    try:
+        with Manager(target="meluxina", benchmark_id=bid) as manager:
+            result = manager.stop_benchmark()
+            
+            if result['services']:
+                print(f"  Cancelled {len(result['services'])} service(s)")
+            if result['clients']:
+                print(f"  Cancelled {len(result['clients'])} client(s)")
+            if result['errors']:
+                for err in result['errors']:
+                    print(f"  ⚠ {err}")
+            
+            print("✓ Done")
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+
+
+def ui_show_logs():
+    """Show logs for a benchmark."""
+    bid = input("\nEnter benchmark ID: ").strip()
+    if not bid:
+        return
+    
+    summary = get_benchmark_summary(bid)
+    if not summary:
+        print(f"\n❌ Benchmark {bid} not found")
+        return
+    
+    print(f"\n📋 Fetching logs for benchmark {bid}...")
+    
+    try:
+        with Manager(target="meluxina", benchmark_id=bid) as manager:
+            logs = manager.tail_logs(num_lines=30)
+            
+            # Show service logs
+            for name, log in logs['services'].items():
+                print(f"\n{'='*60}")
+                print(f"Service: {name}")
+                print("=" * 60)
+                print(log or "(empty)")
+            
+            # Show client logs
+            for name, log in logs['clients'].items():
+                print(f"\n{'-'*60}")
+                print(f"Client: {name}")
+                print("-" * 60)
+                print(log or "(empty)")
+                
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+
+
+def run_benchmark_from_recipe(recipe_path: Path) -> Optional[int]:
+    """
+    Run a benchmark from a recipe file and return the benchmark ID.
+    
+    This is a refactored version of the main benchmark running logic.
+    """
+    try:
+        recipe = parse_recipe(recipe_path)
         
         # Generate unique benchmark ID
         benchmark_id = generate_benchmark_id()
@@ -332,17 +594,17 @@ def main() -> int:
         target = recipe.configuration.target
         if not target:
             print("Error: No target specified in recipe configuration", file=sys.stderr)
-            return 1
+            return None
         
         # Get service configuration from recipe
         service_config = recipe.service
         if not service_config.image:
             print("Error: No container image specified in service section", file=sys.stderr)
-            return 1
+            return None
         
         if not service_config.command:
             print("Error: No service command specified in service section", file=sys.stderr)
-            return 1
+            return None
         
         # Use service name from config or generate default
         service_name = service_config.name or f"service-{benchmark_id}"
@@ -381,7 +643,7 @@ def main() -> int:
             
             if not service:
                 print("\nError: Service deployment failed", file=sys.stderr)
-                return 1
+                return None
             
             print(f"\n{'='*60}")
             print("Service deployed successfully!")
@@ -432,19 +694,332 @@ def main() -> int:
             else:
                 print("\nNo clients configured for deployment.")
             
-            # Final summary
-            print(f"\n{'='*60}")
-            print("Benchmark Deployment Summary")
-            print(f"{'='*60}")
-            print(f"Benchmark ID: {benchmark_id}")
-            print(f"Service: {service.name} (Job ID: {service.job_id})")
-            if num_clients and num_clients > 0:
-                print(f"Clients: {num_clients} deployed")
-            print(f"\nTo check benchmark status:")
-            print(f"  python frontend.py --id {benchmark_id}")
-            print(f"{'='*60}\n")
+            return int(benchmark_id)
+            
+    except Exception as e:
+        print(f"Error running benchmark: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def run_interactive_ui():
+    """Run the interactive UI loop."""
+    clear_screen()
+    print_header()
+    
+    while True:
+        print_main_menu()
+        
+        try:
+            choice = input("\nSelect option: ").strip().lower()
+            
+            if choice == "1":
+                benchmark_id = ui_run_recipe()
+                if benchmark_id:
+                    print(f"\n✓ Benchmark {benchmark_id} started!")
+                    watch = input("Watch status? [y/N]: ").strip().lower()
+                    if watch == 'y':
+                        # Set the benchmark_id for watching
+                        summary = get_benchmark_summary(str(benchmark_id))
+                        if summary:
+                            # Mini watch loop
+                            try:
+                                with Manager(target="meluxina", benchmark_id=str(benchmark_id)) as manager:
+                                    for _ in range(12):  # Watch for ~1 minute
+                                        status = manager.get_benchmark_status()
+                                        svc_status = status['services'][0]['status'] if status['services'] else '?'
+                                        client_done = sum(1 for c in status['clients'] if c['status'] == 'COMPLETED')
+                                        total_clients = len(status['clients'])
+                                        print(f"  [{time.strftime('%H:%M:%S')}] Service: {svc_status}, Clients: {client_done}/{total_clients} done")
+                                        
+                                        all_done = all(c['status'] in ['COMPLETED', 'FAILED', 'CANCELLED'] for c in status['clients'])
+                                        svc_done = svc_status in ['COMPLETED', 'FAILED', 'CANCELLED']
+                                        if all_done and (svc_done or not status['services']):
+                                            print("  ✓ All jobs finished!")
+                                            break
+                                        time.sleep(5)
+                            except KeyboardInterrupt:
+                                print("\n  Stopped watching.")
+                                
+            elif choice == "2":
+                ui_list_benchmarks()
+                
+            elif choice == "3":
+                ui_show_summary()
+                
+            elif choice == "4":
+                ui_watch_status()
+                
+            elif choice == "5":
+                ui_stop_benchmark()
+                
+            elif choice == "6":
+                ui_show_logs()
+                
+            elif choice in ("q", "quit", "exit"):
+                print("\nGoodbye! 👋\n")
+                break
+                
+            else:
+                print("\n⚠ Invalid option, please try again.")
+                
+        except KeyboardInterrupt:
+            print("\n\nUse 'q' to quit.")
+        except Exception as e:
+            print(f"\n❌ Error: {e}")
+
+
+# =============================================================================
+# CLI COMMAND HANDLERS
+# =============================================================================
+
+def cmd_list_benchmarks():
+    """Handle --list-benchmarks command."""
+    benchmarks = list_all_benchmarks()
+    print(format_benchmark_table(benchmarks))
+    return 0
+
+
+def cmd_show_summary(benchmark_id: str):
+    """Handle --summary command."""
+    summary = get_benchmark_summary(benchmark_id)
+    if summary:
+        print(format_benchmark_summary(summary))
+        return 0
+    else:
+        print(f"Benchmark {benchmark_id} not found", file=sys.stderr)
+        return 1
+
+
+def cmd_stop_benchmark(benchmark_id: str):
+    """Handle --stop command."""
+    print(f"Stopping benchmark {benchmark_id}...")
+    try:
+        with Manager(target="meluxina", benchmark_id=benchmark_id) as manager:
+            result = manager.stop_benchmark()
+            
+            cancelled = len(result['services']) + len(result['clients'])
+            if cancelled > 0:
+                print(f"✓ Cancelled {cancelled} job(s)")
+            else:
+                print("No jobs to cancel")
+            
+            for err in result.get('errors', []):
+                print(f"⚠ {err}", file=sys.stderr)
             
             return 0
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_show_logs(benchmark_id: str):
+    """Handle --logs command."""
+    summary = get_benchmark_summary(benchmark_id)
+    if not summary:
+        print(f"Benchmark {benchmark_id} not found", file=sys.stderr)
+        return 1
+    
+    try:
+        with Manager(target="meluxina", benchmark_id=benchmark_id) as manager:
+            logs = manager.tail_logs(num_lines=50)
+            
+            for name, log in logs['services'].items():
+                print(f"\n=== Service: {name} ===")
+                print(log or "(no logs)")
+            
+            for name, log in logs['clients'].items():
+                print(f"\n--- Client: {name} ---")
+                print(log or "(no logs)")
+            
+            return 0
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_watch_benchmark(benchmark_id: str):
+    """Handle --watch command."""
+    summary = get_benchmark_summary(benchmark_id)
+    if not summary:
+        print(f"Benchmark {benchmark_id} not found", file=sys.stderr)
+        return 1
+    
+    print(f"Watching benchmark {benchmark_id} (Ctrl+C to stop)...")
+    
+    try:
+        with Manager(target="meluxina", benchmark_id=benchmark_id) as manager:
+            while True:
+                status = manager.get_benchmark_status()
+                
+                print(f"\n[{time.strftime('%H:%M:%S')}]")
+                for svc in status['services']:
+                    print(f"  Service {svc['name']}: {svc['status']}")
+                for client in status['clients']:
+                    print(f"  Client {client['name']}: {client['status']}")
+                
+                # Check if all done
+                all_states = [s['status'] for s in status['services']] + [c['status'] for c in status['clients']]
+                if all(s in ['COMPLETED', 'FAILED', 'CANCELLED'] for s in all_states):
+                    print("\n✓ All jobs finished!")
+                    break
+                
+                time.sleep(5)
+                
+        return 0
+    except KeyboardInterrupt:
+        print("\nStopped.")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_collect_metrics(benchmark_id: str):
+    """Handle --metrics command."""
+    summary = get_benchmark_summary(benchmark_id)
+    if not summary:
+        print(f"Benchmark {benchmark_id} not found", file=sys.stderr)
+        return 1
+    
+    # Check for existing metrics
+    existing = BenchmarkMetrics.load(benchmark_id)
+    if existing:
+        print(f"Found existing metrics (collected {existing.collected_at.strftime('%Y-%m-%d %H:%M:%S')})")
+        print(format_metrics_report(existing))
+        
+        recollect = input("\nRecollect metrics? [y/N]: ").strip().lower()
+        if recollect != 'y':
+            return 0
+    
+    print(f"Collecting metrics for benchmark {benchmark_id}...")
+    
+    try:
+        with Manager(target="meluxina", benchmark_id=benchmark_id) as manager:
+            collector = MetricsCollector(manager.communicator)
+            
+            # Get job IDs from summary
+            service_job_id = summary.service_job_id
+            client_job_ids = [c.get('job_id') for c in summary.clients if c.get('job_id')]
+            
+            metrics = collector.collect_benchmark_metrics(
+                benchmark_id=benchmark_id,
+                service_job_id=service_job_id,
+                client_job_ids=client_job_ids,
+                service_hostname=summary.service_hostname
+            )
+            
+            # Save metrics
+            metrics.save()
+            print("✓ Metrics saved")
+            
+            # Print report
+            print(format_metrics_report(metrics))
+            
+        return 0
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_launch_web():
+    """Handle --web command."""
+    import subprocess
+    
+    flask_app_path = Path(__file__).parent / "web" / "flask_app.py"
+    
+    if not flask_app_path.exists():
+        print(f"Web app not found at {flask_app_path}", file=sys.stderr)
+        return 1
+    
+    print("🌐 Launching Web UI...")
+    print("   Open http://localhost:5000 in your browser")
+    print("   Press Ctrl+C to stop\n")
+    
+    try:
+        subprocess.run([sys.executable, str(flask_app_path)], check=True)
+        return 0
+    except KeyboardInterrupt:
+        print("\nWeb UI stopped.")
+        return 0
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def main() -> int:
+    """
+    Main entry point for the frontend.
+    
+    Returns:
+        Exit code (0 for success, non-zero for errors)
+    """
+    parser = create_argument_parser()
+    args = parser.parse_args()
+    
+    try:
+        # Handle CLI commands first
+        
+        # --ui: Launch interactive UI
+        if args.ui:
+            run_interactive_ui()
+            return 0
+        
+        # --list-benchmarks: List all benchmarks
+        if args.list_benchmarks:
+            return cmd_list_benchmarks()
+        
+        # --summary: Show benchmark summary
+        if args.summary:
+            return cmd_show_summary(args.summary)
+        
+        # --stop: Stop a benchmark
+        if args.stop:
+            return cmd_stop_benchmark(args.stop)
+        
+        # --logs: Show logs for a benchmark
+        if args.logs:
+            return cmd_show_logs(args.logs)
+        
+        # --watch: Watch benchmark status
+        if args.watch:
+            return cmd_watch_benchmark(args.watch)
+        
+        # --metrics: Collect and show metrics
+        if args.metrics:
+            return cmd_collect_metrics(args.metrics)
+        
+        # --web: Launch web UI
+        if args.web:
+            return cmd_launch_web()
+        
+        # --id: Load existing benchmark by ID
+        if args.benchmark_id:
+            return cmd_show_summary(args.benchmark_id)
+        
+        # Recipe file provided: Run benchmark
+        if args.recipe:
+            result = run_benchmark_from_recipe(args.recipe)
+            if result:
+                # Final summary
+                print(f"\n{'='*60}")
+                print("Benchmark Deployment Summary")
+                print(f"{'='*60}")
+                print(f"Benchmark ID: {result}")
+                print(f"\nUseful commands:")
+                print(f"  python frontend.py --summary {result}   # Show summary")
+                print(f"  python frontend.py --watch {result}     # Watch status")
+                print(f"  python frontend.py --logs {result}      # Show logs")
+                print(f"  python frontend.py --stop {result}      # Stop benchmark")
+                print(f"{'='*60}\n")
+                return 0
+            else:
+                return 1
+        
+        # No arguments: Launch interactive UI
+        run_interactive_ui()
+        return 0
         
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)

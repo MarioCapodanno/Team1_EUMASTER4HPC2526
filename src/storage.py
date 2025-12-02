@@ -13,6 +13,7 @@ to run concurrently or access historical benchmark data.
 import csv
 import json
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Type
 from datetime import datetime
@@ -436,3 +437,194 @@ def set_storage_manager(manager: StorageManager) -> None:
     """
     global _default_storage_manager
     _default_storage_manager = manager
+
+
+# =============================================================================
+# BENCHMARK INFO HELPERS
+# =============================================================================
+
+@dataclass
+class BenchmarkInfo:
+    """Summary information about a benchmark."""
+    benchmark_id: str
+    service_name: Optional[str] = None
+    service_job_id: Optional[str] = None
+    num_clients: int = 0
+    created_at: Optional[datetime] = None
+
+
+@dataclass
+class BenchmarkSummary:
+    """Detailed summary of a benchmark run."""
+    benchmark_id: str
+    service_name: Optional[str] = None
+    service_job_id: Optional[str] = None
+    service_hostname: Optional[str] = None
+    service_image: Optional[str] = None
+    clients: List[Dict[str, Any]] = None
+    created_at: Optional[datetime] = None
+    log_dir: Optional[str] = None
+    
+    def __post_init__(self):
+        if self.clients is None:
+            self.clients = []
+
+
+def list_all_benchmarks() -> List[BenchmarkInfo]:
+    """
+    List all benchmarks in storage with basic info.
+    
+    Returns:
+        List of BenchmarkInfo objects sorted by ID (newest first)
+    """
+    storage = get_storage_manager()
+    benchmark_ids = storage.list_benchmarks()
+    
+    benchmarks = []
+    for bid in benchmark_ids:
+        try:
+            # Try to parse as int for sorting
+            int_id = int(bid)
+        except ValueError:
+            int_id = 0
+        
+        info = BenchmarkInfo(benchmark_id=bid)
+        
+        # Try to load service info
+        services = storage.load_all_entities(bid, "service")
+        if services:
+            svc = services[0]  # Usually one service per benchmark
+            info.service_name = svc.get('name')
+            info.service_job_id = svc.get('job_id')
+            # Try to get creation time
+            submit_time = svc.get('submit_time')
+            if submit_time and isinstance(submit_time, datetime):
+                info.created_at = submit_time
+        
+        # Count clients
+        clients = storage.load_all_entities(bid, "client")
+        info.num_clients = len(clients)
+        
+        benchmarks.append((int_id, info))
+    
+    # Sort by ID descending (newest first)
+    benchmarks.sort(key=lambda x: x[0], reverse=True)
+    return [b[1] for b in benchmarks]
+
+
+def get_benchmark_summary(benchmark_id: str) -> Optional[BenchmarkSummary]:
+    """
+    Get detailed summary of a benchmark.
+    
+    Args:
+        benchmark_id: Benchmark ID to get summary for
+        
+    Returns:
+        BenchmarkSummary object or None if not found
+    """
+    storage = get_storage_manager()
+    
+    # Check if benchmark exists
+    all_ids = storage.list_benchmarks()
+    if benchmark_id not in all_ids:
+        return None
+    
+    summary = BenchmarkSummary(benchmark_id=benchmark_id)
+    
+    # Load service info
+    services = storage.load_all_entities(benchmark_id, "service")
+    if services:
+        svc = services[0]
+        summary.service_name = svc.get('name')
+        summary.service_job_id = svc.get('job_id')
+        summary.service_hostname = svc.get('hostname')
+        summary.service_image = svc.get('container_image')
+        submit_time = svc.get('submit_time')
+        if submit_time and isinstance(submit_time, datetime):
+            summary.created_at = submit_time
+        
+        # Construct log directory path
+        working_dir = svc.get('working_dir', f'~/benchmark_{benchmark_id}')
+        summary.log_dir = f"{working_dir}/logs"
+    
+    # Load client info
+    clients = storage.load_all_entities(benchmark_id, "client")
+    for client in clients:
+        summary.clients.append({
+            'name': client.get('name'),
+            'job_id': client.get('job_id'),
+            'hostname': client.get('hostname'),
+            'service_name': client.get('service_name')
+        })
+    
+    return summary
+
+
+def format_benchmark_table(benchmarks: List[BenchmarkInfo]) -> str:
+    """
+    Format a list of benchmarks as a nice ASCII table.
+    
+    Args:
+        benchmarks: List of BenchmarkInfo objects
+        
+    Returns:
+        Formatted table string
+    """
+    if not benchmarks:
+        return "No benchmarks found."
+    
+    # Header
+    lines = [
+        f"{'ID':<6} {'Service':<25} {'Job ID':<12} {'Clients':<8} {'Created'}",
+        "-" * 75
+    ]
+    
+    for b in benchmarks:
+        created = b.created_at.strftime("%Y-%m-%d %H:%M") if b.created_at else "?"
+        service = (b.service_name or "?")[:24]
+        job_id = str(b.service_job_id or "?")[:11]
+        lines.append(f"{b.benchmark_id:<6} {service:<25} {job_id:<12} {b.num_clients:<8} {created}")
+    
+    return "\n".join(lines)
+
+
+def format_benchmark_summary(summary: BenchmarkSummary) -> str:
+    """
+    Format a benchmark summary as a nice text report.
+    
+    Args:
+        summary: BenchmarkSummary object
+        
+    Returns:
+        Formatted summary string
+    """
+    lines = [
+        f"",
+        f"{'='*60}",
+        f"Benchmark {summary.benchmark_id} - {summary.service_name or 'Unknown Service'}",
+        f"{'='*60}",
+        f"",
+        f"Service:",
+        f"  Name:      {summary.service_name or '?'}",
+        f"  Job ID:    {summary.service_job_id or '?'}",
+        f"  Hostname:  {summary.service_hostname or '?'}",
+        f"  Image:     {summary.service_image or '?'}",
+        f"",
+    ]
+    
+    if summary.clients:
+        lines.append(f"Clients ({len(summary.clients)}):")
+        for c in summary.clients:
+            lines.append(f"  - {c.get('name', '?')} (Job {c.get('job_id', '?')}) on {c.get('hostname', '?')}")
+    else:
+        lines.append("Clients: None")
+    
+    lines.extend([
+        f"",
+        f"Created: {summary.created_at.strftime('%Y-%m-%d %H:%M:%S') if summary.created_at else '?'}",
+        f"",
+        f"Logs: {summary.log_dir or '?'}",
+        f"{'='*60}",
+    ])
+    
+    return "\n".join(lines)

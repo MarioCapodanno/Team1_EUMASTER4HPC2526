@@ -749,6 +749,114 @@ echo "Benchmark completed at $(date)"
         
         return None
     
+    def stop_benchmark(self) -> dict:
+        """
+        Stop all jobs (service + clients) for this benchmark.
+        
+        Returns:
+            Dictionary with cancelled job info: {'services': [...], 'clients': [...], 'errors': [...]}
+        """
+        self._ensure_connected()
+        
+        result = {'services': [], 'clients': [], 'errors': []}
+        
+        # Load and cancel all services
+        services = self.load_all_services()
+        for service in services:
+            if service.job_id:
+                try:
+                    if self.cancel_job(service.job_id):
+                        result['services'].append({'name': service.name, 'job_id': service.job_id})
+                    else:
+                        result['errors'].append(f"Failed to cancel service {service.name} (job {service.job_id})")
+                except Exception as e:
+                    result['errors'].append(f"Error cancelling service {service.name}: {e}")
+        
+        # Load and cancel all clients
+        clients = self.load_all_clients()
+        for client in clients:
+            if client.job_id:
+                try:
+                    if self.cancel_job(client.job_id):
+                        result['clients'].append({'name': client.name, 'job_id': client.job_id})
+                    else:
+                        result['errors'].append(f"Failed to cancel client {client.name} (job {client.job_id})")
+                except Exception as e:
+                    result['errors'].append(f"Error cancelling client {client.name}: {e}")
+        
+        return result
+    
+    def get_benchmark_status(self) -> dict:
+        """
+        Get current status of all jobs in this benchmark.
+        
+        Returns:
+            Dictionary with status info for services and clients
+        """
+        self._ensure_connected()
+        
+        status = {'services': [], 'clients': []}
+        
+        # Get service statuses
+        services = self.load_all_services()
+        for service in services:
+            job_status = None
+            if service.job_id:
+                job_status = self.get_job_status(service.job_id)
+            status['services'].append({
+                'name': service.name,
+                'job_id': service.job_id,
+                'status': job_status or 'UNKNOWN',
+                'hostname': service.hostname
+            })
+        
+        # Get client statuses
+        clients = self.load_all_clients()
+        for client in clients:
+            job_status = None
+            if client.job_id:
+                job_status = self.get_job_status(client.job_id)
+            status['clients'].append({
+                'name': client.name,
+                'job_id': client.job_id,
+                'status': job_status or 'UNKNOWN',
+                'hostname': client.hostname
+            })
+        
+        return status
+    
+    def tail_logs(self, num_lines: int = 20) -> dict:
+        """
+        Tail the logs for all jobs in this benchmark.
+        
+        Args:
+            num_lines: Number of lines to tail
+            
+        Returns:
+            Dictionary with log snippets for services and clients
+        """
+        self._ensure_connected()
+        
+        logs = {'services': {}, 'clients': {}}
+        
+        # Get service logs
+        services = self.load_all_services()
+        for service in services:
+            if service.job_id:
+                log_path = f"{self.abs_working_dir}/logs/{service.name}_{service.job_id}.out"
+                result = self.communicator.execute_command(f"tail -n {num_lines} {log_path} 2>/dev/null")
+                logs['services'][service.name] = result.stdout if result.success else "(no logs yet)"
+        
+        # Get client logs
+        clients = self.load_all_clients()
+        for client in clients:
+            if client.job_id:
+                log_path = f"{self.abs_working_dir}/logs/{client.name}_{client.job_id}.out"
+                result = self.communicator.execute_command(f"tail -n {num_lines} {log_path} 2>/dev/null")
+                logs['clients'][client.name] = result.stdout if result.success else "(no logs yet)"
+        
+        return logs
+    
     def __enter__(self):
         """Context manager entry."""
         self.connect()
