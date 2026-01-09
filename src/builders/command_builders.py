@@ -792,6 +792,428 @@ echo 'Benchmark complete'"""
 
 
 # =============================================================================
+# REDIS SERVICE AND CLIENT BUILDERS
+# =============================================================================
+
+
+def build_redis_service_command(settings: Dict[str, Any]) -> str:
+    """Build Redis service startup command."""
+    port = settings.get("port", 6379)
+    appendonly = settings.get("appendonly", False)
+    maxmemory = settings.get("maxmemory", "")
+    maxmemory_policy = settings.get("maxmemory_policy", "noeviction")
+
+    cmd_parts = [f"redis-server --port {port} --bind 0.0.0.0 --protected-mode no"]
+
+    if appendonly:
+        cmd_parts[0] += " --appendonly yes"
+    if maxmemory:
+        cmd_parts[0] += f" --maxmemory {maxmemory} --maxmemory-policy {maxmemory_policy}"
+
+    return cmd_parts[0]
+
+
+def build_redis_stress_client_command(settings: Dict[str, Any]) -> str:
+    """Build Redis stress test client command with JSONL output."""
+    num_requests = settings.get("num_requests", 10000)
+    key_size = settings.get("key_size_bytes", 32)
+    value_size = settings.get("value_size_bytes", 256)
+    warmup_delay = settings.get("warmup_delay", 5)
+
+    return f"""sleep {warmup_delay}
+
+echo "=== Redis Stress Test ==="
+echo "Requests: {num_requests}"
+echo "Key size: {key_size} bytes"
+echo "Value size: {value_size} bytes"
+echo ""
+
+echo "Waiting for Redis to be ready..."
+MAX_RETRIES=30
+RETRY=0
+while [ $RETRY -lt $MAX_RETRIES ]; do
+  if redis-cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT PING 2>/dev/null | grep -q PONG; then
+    echo "✓ Redis is ready!"
+    break
+  fi
+  echo "Redis not ready yet, waiting... (attempt $((RETRY+1))/$MAX_RETRIES)"
+  sleep 2
+  RETRY=$((RETRY+1))
+done
+if [ $RETRY -eq $MAX_RETRIES ]; then
+  echo "✗ Redis did not become ready in time"
+  exit 1
+fi
+
+# Initialize JSONL output
+echo '{{"benchmark_id": "'$BENCHMARK_ID'", "service_type": "redis", "test_start": "'$(date -Iseconds)'"}}' > "$BENCHMARK_OUTPUT_DIR/requests.jsonl"
+
+echo ""
+echo "=== SET PHASE ==="
+SET_START=$(date +%s.%N)
+set_errors=0
+
+for i in $(seq 1 {num_requests}); do
+  KEY="benchmark_key_$i"
+  VALUE=$(head -c {value_size} /dev/urandom | base64 | head -c {value_size})
+  
+  start_time=$(date +%s.%N)
+  start_ts=$(date +%s)
+  
+  result=$(redis-cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT SET "$KEY" "$VALUE" 2>&1)
+  
+  end_time=$(date +%s.%N)
+  latency=$(echo "$end_time - $start_time" | bc)
+  
+  if echo "$result" | grep -q "OK"; then
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "redis", "operation": "SET", "request_id": '$i'}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  else
+    set_errors=$((set_errors + 1))
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": false, "service_type": "redis", "operation": "SET", "request_id": '$i', "error": "set_failed"}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  fi
+  
+  if [ $((i % 1000)) -eq 0 ]; then
+    echo "SET: $i/{num_requests} completed"
+  fi
+done
+
+SET_END=$(date +%s.%N)
+SET_DURATION=$(echo "$SET_END - $SET_START" | bc)
+SET_OPS=$(echo "scale=2; {num_requests} / $SET_DURATION" | bc)
+
+echo ""
+echo "=== GET PHASE ==="
+GET_START=$(date +%s.%N)
+get_errors=0
+
+for i in $(seq 1 {num_requests}); do
+  KEY="benchmark_key_$i"
+  
+  start_time=$(date +%s.%N)
+  start_ts=$(date +%s)
+  
+  result=$(redis-cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT GET "$KEY" 2>&1)
+  
+  end_time=$(date +%s.%N)
+  latency=$(echo "$end_time - $start_time" | bc)
+  
+  if [ -n "$result" ] && ! echo "$result" | grep -q "error"; then
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "redis", "operation": "GET", "request_id": '$((i + {num_requests}))'}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  else
+    get_errors=$((get_errors + 1))
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": false, "service_type": "redis", "operation": "GET", "request_id": '$((i + {num_requests}))', "error": "get_failed"}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  fi
+  
+  if [ $((i % 1000)) -eq 0 ]; then
+    echo "GET: $i/{num_requests} completed"
+  fi
+done
+
+GET_END=$(date +%s.%N)
+GET_DURATION=$(echo "$GET_END - $GET_START" | bc)
+GET_OPS=$(echo "scale=2; {num_requests} / $GET_DURATION" | bc)
+
+TOTAL_OPS=$(echo "scale=2; ({num_requests} * 2) / ($SET_DURATION + $GET_DURATION)" | bc)
+
+echo ""
+echo "=== REDIS STRESS TEST COMPLETE ==="
+echo "SET: {num_requests} ops in ${{SET_DURATION}}s (${{SET_OPS}} ops/sec), errors: $set_errors"
+echo "GET: {num_requests} ops in ${{GET_DURATION}}s (${{GET_OPS}} ops/sec), errors: $get_errors"
+echo "Total: $((num_requests * 2)) ops, ${{TOTAL_OPS}} ops/sec"
+"""
+
+
+# =============================================================================
+# MINIO SERVICE AND CLIENT BUILDERS
+# =============================================================================
+
+
+def build_minio_service_command(settings: Dict[str, Any]) -> str:
+    """Build MinIO service startup command."""
+    data_dir = settings.get("data_dir", "/data")
+    console_port = settings.get("console_port", 9001)
+
+    return f"minio server {data_dir} --console-address \":${{console_port:-{console_port}}}\""
+
+
+def build_minio_stress_client_command(settings: Dict[str, Any]) -> str:
+    """Build MinIO stress test client command with JSONL output."""
+    num_objects = settings.get("num_objects", 100)
+    object_size = settings.get("object_size_bytes", 1048576)  # 1MB default
+    bucket = settings.get("bucket", "benchmark")
+    warmup_delay = settings.get("warmup_delay", 10)
+
+    return f"""sleep {warmup_delay}
+
+echo "=== MinIO Stress Test ==="
+echo "Objects: {num_objects}"
+echo "Object size: {object_size} bytes"
+echo "Bucket: {bucket}"
+echo ""
+
+# Configure mc alias
+export MC_HOST_minio="http://${{MINIO_ROOT_USER:-minioadmin}}:${{MINIO_ROOT_PASSWORD:-minioadmin}}@$SERVICE_HOSTNAME:$SERVICE_PORT"
+
+echo "Waiting for MinIO to be ready..."
+MAX_RETRIES=30
+RETRY=0
+while [ $RETRY -lt $MAX_RETRIES ]; do
+  if curl -s "http://$SERVICE_HOSTNAME:$SERVICE_PORT/minio/health/ready" | grep -q ""; then
+    echo "✓ MinIO is ready!"
+    break
+  fi
+  echo "MinIO not ready yet, waiting... (attempt $((RETRY+1))/$MAX_RETRIES)"
+  sleep 3
+  RETRY=$((RETRY+1))
+done
+if [ $RETRY -eq $MAX_RETRIES ]; then
+  echo "✗ MinIO did not become ready in time"
+  exit 1
+fi
+
+# Create bucket
+mc mb minio/{bucket} 2>/dev/null || echo "Bucket may already exist"
+
+# Initialize JSONL output
+echo '{{"benchmark_id": "'$BENCHMARK_ID'", "service_type": "minio", "test_start": "'$(date -Iseconds)'"}}' > "$BENCHMARK_OUTPUT_DIR/requests.jsonl"
+
+# Generate test file
+dd if=/dev/urandom of=/tmp/testfile bs={object_size} count=1 2>/dev/null
+
+echo ""
+echo "=== PUT PHASE ==="
+PUT_START=$(date +%s.%N)
+put_errors=0
+
+for i in $(seq 1 {num_objects}); do
+  start_time=$(date +%s.%N)
+  start_ts=$(date +%s)
+  
+  result=$(mc cp /tmp/testfile minio/{bucket}/object_$i 2>&1)
+  exit_code=$?
+  
+  end_time=$(date +%s.%N)
+  latency=$(echo "$end_time - $start_time" | bc)
+  
+  if [ $exit_code -eq 0 ]; then
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "minio", "operation": "PUT", "request_id": '$i', "bytes": {object_size}}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  else
+    put_errors=$((put_errors + 1))
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": false, "service_type": "minio", "operation": "PUT", "request_id": '$i', "error": "put_failed"}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  fi
+  
+  if [ $((i % 10)) -eq 0 ]; then
+    echo "PUT: $i/{num_objects} completed"
+  fi
+done
+
+PUT_END=$(date +%s.%N)
+PUT_DURATION=$(echo "$PUT_END - $PUT_START" | bc)
+PUT_OPS=$(echo "scale=2; {num_objects} / $PUT_DURATION" | bc)
+PUT_BPS=$(echo "scale=0; {num_objects} * {object_size} / $PUT_DURATION" | bc)
+
+echo ""
+echo "=== GET PHASE ==="
+GET_START=$(date +%s.%N)
+get_errors=0
+
+for i in $(seq 1 {num_objects}); do
+  start_time=$(date +%s.%N)
+  start_ts=$(date +%s)
+  
+  result=$(mc cp minio/{bucket}/object_$i /tmp/downloaded_$i 2>&1)
+  exit_code=$?
+  
+  end_time=$(date +%s.%N)
+  latency=$(echo "$end_time - $start_time" | bc)
+  
+  if [ $exit_code -eq 0 ]; then
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "minio", "operation": "GET", "request_id": '$((i + {num_objects}))', "bytes": {object_size}}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+    rm -f /tmp/downloaded_$i
+  else
+    get_errors=$((get_errors + 1))
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": false, "service_type": "minio", "operation": "GET", "request_id": '$((i + {num_objects}))', "error": "get_failed"}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  fi
+  
+  if [ $((i % 10)) -eq 0 ]; then
+    echo "GET: $i/{num_objects} completed"
+  fi
+done
+
+GET_END=$(date +%s.%N)
+GET_DURATION=$(echo "$GET_END - $GET_START" | bc)
+GET_OPS=$(echo "scale=2; {num_objects} / $GET_DURATION" | bc)
+GET_BPS=$(echo "scale=0; {num_objects} * {object_size} / $GET_DURATION" | bc)
+
+echo ""
+echo "=== MINIO STRESS TEST COMPLETE ==="
+echo "PUT: {num_objects} objects in ${{PUT_DURATION}}s (${{PUT_OPS}} ops/sec, ${{PUT_BPS}} B/s)"
+echo "GET: {num_objects} objects in ${{GET_DURATION}}s (${{GET_OPS}} ops/sec, ${{GET_BPS}} B/s)"
+echo "Errors: PUT=$put_errors, GET=$get_errors"
+
+# Cleanup
+rm -f /tmp/testfile
+"""
+
+
+# =============================================================================
+# QDRANT SERVICE AND CLIENT BUILDERS
+# =============================================================================
+
+
+def build_qdrant_service_command(settings: Dict[str, Any]) -> str:
+    """Build Qdrant service startup command."""
+    # Qdrant uses default ports 6333 (HTTP) and 6334 (gRPC)
+    return "./qdrant"
+
+
+def build_qdrant_stress_client_command(settings: Dict[str, Any]) -> str:
+    """Build Qdrant stress test client command with JSONL output."""
+    collection = settings.get("collection", "benchmark")
+    dim = settings.get("dim", 128)
+    num_points = settings.get("num_points", 10000)
+    batch_size = settings.get("batch_size", 256)
+    num_queries = settings.get("num_queries", 1000)
+    top_k = settings.get("top_k", 10)
+    warmup_delay = settings.get("warmup_delay", 10)
+
+    return f"""sleep {warmup_delay}
+
+echo "=== Qdrant Stress Test ==="
+echo "Collection: {collection}"
+echo "Dimensions: {dim}"
+echo "Points: {num_points}"
+echo "Queries: {num_queries}"
+echo ""
+
+QDRANT_URL="http://$SERVICE_HOSTNAME:$SERVICE_PORT"
+
+echo "Waiting for Qdrant to be ready..."
+MAX_RETRIES=30
+RETRY=0
+while [ $RETRY -lt $MAX_RETRIES ]; do
+  if curl -s "$QDRANT_URL/healthz" 2>/dev/null | grep -q "ok"; then
+    echo "✓ Qdrant is ready!"
+    break
+  fi
+  echo "Qdrant not ready yet, waiting... (attempt $((RETRY+1))/$MAX_RETRIES)"
+  sleep 3
+  RETRY=$((RETRY+1))
+done
+if [ $RETRY -eq $MAX_RETRIES ]; then
+  echo "✗ Qdrant did not become ready in time"
+  exit 1
+fi
+
+# Initialize JSONL output
+echo '{{"benchmark_id": "'$BENCHMARK_ID'", "service_type": "qdrant", "test_start": "'$(date -Iseconds)'"}}' > "$BENCHMARK_OUTPUT_DIR/requests.jsonl"
+
+# Delete collection if exists and create new one
+echo "Creating collection {collection}..."
+curl -s -X DELETE "$QDRANT_URL/collections/{collection}" > /dev/null 2>&1
+
+curl -s -X PUT "$QDRANT_URL/collections/{collection}" \\
+  -H "Content-Type: application/json" \\
+  -d '{{
+    "vectors": {{
+      "size": {dim},
+      "distance": "Cosine"
+    }}
+  }}' > /dev/null
+
+echo ""
+echo "=== INSERT PHASE ==="
+INSERT_START=$(date +%s.%N)
+insert_errors=0
+inserted=0
+
+# Insert in batches
+for batch_start in $(seq 0 {batch_size} {num_points}); do
+  batch_end=$((batch_start + {batch_size}))
+  if [ $batch_end -gt {num_points} ]; then
+    batch_end={num_points}
+  fi
+  
+  # Generate batch payload
+  points=""
+  for i in $(seq $batch_start $((batch_end - 1))); do
+    # Generate random vector
+    vector=$(python3 -c "import random; print([random.random() for _ in range({dim})])")
+    if [ -n "$points" ]; then
+      points="$points,"
+    fi
+    points="$points{{\\\"id\\\": $i, \\\"vector\\\": $vector}}"
+  done
+  
+  start_time=$(date +%s.%N)
+  start_ts=$(date +%s)
+  
+  result=$(curl -s -X PUT "$QDRANT_URL/collections/{collection}/points" \\
+    -H "Content-Type: application/json" \\
+    -d "{{\\\"points\\\": [$points]}}" 2>&1)
+  
+  end_time=$(date +%s.%N)
+  latency=$(echo "$end_time - $start_time" | bc)
+  batch_count=$((batch_end - batch_start))
+  
+  if echo "$result" | grep -q '"status":"ok"'; then
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "qdrant", "operation": "INSERT", "batch_size": '$batch_count', "request_id": '$((batch_start / {batch_size}))' }}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+    inserted=$((inserted + batch_count))
+  else
+    insert_errors=$((insert_errors + 1))
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": false, "service_type": "qdrant", "operation": "INSERT", "request_id": '$((batch_start / {batch_size}))', "error": "insert_failed"}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  fi
+  
+  echo "Inserted: $inserted/{num_points}"
+done
+
+INSERT_END=$(date +%s.%N)
+INSERT_DURATION=$(echo "$INSERT_END - $INSERT_START" | bc)
+INSERT_VPS=$(echo "scale=2; $inserted / $INSERT_DURATION" | bc)
+
+echo ""
+echo "=== QUERY PHASE ==="
+QUERY_START=$(date +%s.%N)
+query_errors=0
+
+for i in $(seq 1 {num_queries}); do
+  # Generate random query vector
+  query_vector=$(python3 -c "import random; print([random.random() for _ in range({dim})])")
+  
+  start_time=$(date +%s.%N)
+  start_ts=$(date +%s)
+  
+  result=$(curl -s -X POST "$QDRANT_URL/collections/{collection}/points/search" \\
+    -H "Content-Type: application/json" \\
+    -d "{{\\\"vector\\\": $query_vector, \\\"limit\\\": {top_k}}}" 2>&1)
+  
+  end_time=$(date +%s.%N)
+  latency=$(echo "$end_time - $start_time" | bc)
+  
+  if echo "$result" | grep -q '"result"'; then
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "qdrant", "operation": "QUERY", "request_id": '$((i + {num_points}))' }}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  else
+    query_errors=$((query_errors + 1))
+    echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": false, "service_type": "qdrant", "operation": "QUERY", "request_id": '$((i + {num_points}))', "error": "query_failed"}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
+  fi
+  
+  if [ $((i % 100)) -eq 0 ]; then
+    echo "Query: $i/{num_queries} completed"
+  fi
+done
+
+QUERY_END=$(date +%s.%N)
+QUERY_DURATION=$(echo "$QUERY_END - $QUERY_START" | bc)
+QUERY_QPS=$(echo "scale=2; {num_queries} / $QUERY_DURATION" | bc)
+
+echo ""
+echo "=== QDRANT STRESS TEST COMPLETE ==="
+echo "INSERT: $inserted vectors in ${{INSERT_DURATION}}s (${{INSERT_VPS}} vps), errors: $insert_errors"
+echo "QUERY: {num_queries} queries in ${{QUERY_DURATION}}s (${{QUERY_QPS}} qps), errors: $query_errors"
+"""
+
+
+# =============================================================================
 # REGISTRY AND MAIN BUILDER FUNCTIONS
 # =============================================================================
 
@@ -801,6 +1223,9 @@ SERVICE_BUILDERS = {
     "vllm": build_vllm_service_command,
     "ollama": build_ollama_service_command,
     "nginx": build_nginx_service_command,
+    "redis": build_redis_service_command,
+    "minio": build_minio_service_command,
+    "qdrant": build_qdrant_service_command,
 }
 
 CLIENT_BUILDERS = {
@@ -813,6 +1238,9 @@ CLIENT_BUILDERS = {
     "ollama_smoke": build_ollama_smoke_client_command,
     "ollama_stress": build_ollama_stress_client_command,
     "nginx_healthcheck": build_nginx_healthcheck_client_command,
+    "redis_stress": build_redis_stress_client_command,
+    "minio_stress": build_minio_stress_client_command,
+    "qdrant_stress": build_qdrant_stress_client_command,
 }
 
 
@@ -858,6 +1286,9 @@ def get_default_image(service_type: str) -> Optional[str]:
         "vllm": "vllm/vllm-openai:latest",
         "ollama": "ollama/ollama:latest",
         "nginx": "nginx:latest",
+        "redis": "redis:latest",
+        "minio": "minio/minio:latest",
+        "qdrant": "qdrant/qdrant:latest",
     }
     return defaults.get(service_type)
 
@@ -870,6 +1301,9 @@ def get_default_port(service_type: str) -> Optional[int]:
         "vllm": 8000,
         "ollama": 11434,
         "nginx": 80,
+        "redis": 6379,
+        "minio": 9000,
+        "qdrant": 6333,
     }
     return defaults.get(service_type)
 

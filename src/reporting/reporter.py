@@ -501,6 +501,14 @@ def generate_markdown_report(
         ]
     )
 
+    # Log Analysis (if logs available)
+    try:
+        from reporting.log_analyzer import generate_log_summary_for_report
+        _, log_markdown = generate_log_summary_for_report(benchmark_id)
+        lines.append(log_markdown)
+    except Exception:
+        pass  # Skip log analysis if it fails
+
     # Reproducibility
     lines.extend(
         [

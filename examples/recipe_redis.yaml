@@ -1,0 +1,27 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "redis-cache"
+  type: "redis"
+  partition: "cpu"
+  nodes: 1
+  time_limit: "00:30:00"
+  settings:
+    port: 6379
+
+client:
+  name: "redis-benchmark"
+  type: "redis_stress"
+  partition: "cpu"
+  nodes: 1
+  time_limit: "00:25:00"
+  settings:
+    num_requests: 1000
+    key_size_bytes: 32
+    value_size_bytes: 256
+    warmup_delay: 5
+
+benchmarks:
+  num_clients: 1
+  client_delay: 5

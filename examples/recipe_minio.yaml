@@ -1,0 +1,31 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "minio-storage"
+  type: "minio"
+  partition: "cpu"
+  nodes: 1
+  time_limit: "00:30:00"
+  settings:
+    data_dir: "/data"
+    console_port: 9001
+  environment:
+    MINIO_ROOT_USER: "minioadmin"
+    MINIO_ROOT_PASSWORD: "minioadmin"
+
+client:
+  name: "minio-benchmark"
+  type: "minio_stress"
+  partition: "cpu"
+  nodes: 1
+  time_limit: "00:25:00"
+  settings:
+    num_objects: 50
+    object_size_bytes: 1048576
+    bucket: "benchmark"
+    warmup_delay: 10
+
+benchmarks:
+  num_clients: 1
+  client_delay: 5
