@@ -7,20 +7,20 @@ Run with: python src/web/flask_app.py
 """
 
 import sys
-import json
 from pathlib import Path
-from datetime import datetime
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from flask import Flask, render_template_string, jsonify, request, redirect, url_for
+from flask import Flask, jsonify, redirect, send_file
 
 from storage import (
     list_all_benchmarks,
     get_benchmark_summary,
 )
-from monitor import BenchmarkMetrics
+from artifacts import read_run_json, read_summary_json
+from reporter import generate_benchmark_report
+from collector import collect_benchmark_artifacts
 
 app = Flask(__name__)
 
@@ -187,6 +187,8 @@ BASE_TEMPLATE = """
         <div class="nav">
             <a href="/" class="{{ 'active' if page == 'dashboard' else '' }}">Dashboard</a>
             <a href="/benchmarks" class="{{ 'active' if page == 'benchmarks' else '' }}">Benchmarks</a>
+            <a href="/metrics" class="{{ 'active' if page == 'metrics' else '' }}">Metrics</a>
+            <a href="/reports" class="{{ 'active' if page == 'reports' else '' }}">Reports</a>
             <a href="/cli" class="{{ 'active' if page == 'cli' else '' }}">CLI Reference</a>
         </div>
         
@@ -394,26 +396,160 @@ python src/frontend.py examples/recipe_vllm.yaml</div>
 {% endblock %}
 """
 
+METRICS_TEMPLATE = """
+{% extends "base" %}
+{% block content %}
+<div class="card">
+    <h2>📊 Benchmark Metrics</h2>
+    {% if benchmarks %}
+    <div class="stats-grid">
+        {% for b in benchmarks[:5] %}
+        <div class="stat-card">
+            <div class="value">#{{ b.benchmark_id }}</div>
+            <div class="label">{{ b.service_name or 'Unknown' }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <h3>Recent Performance</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Benchmark</th>
+                <th>Service</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in benchmarks[:10] %}
+            <tr>
+                <td><strong>#{{ b.benchmark_id }}</strong></td>
+                <td>{{ b.service_name or '?' }}</td>
+                <td>
+                    {% if b.service_job_id %}
+                        <span style="color: #4caf50;">Running</span>
+                    {% else %}
+                        <span style="color: #888;">Unknown</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/benchmark/{{ b.benchmark_id }}/metrics" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85rem;">View Metrics</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="info">No benchmarks found. Run your first benchmark using the CLI!</div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>📈 Performance Trends</h2>
+    <div class="info">
+        <strong>Coming Soon:</strong> Interactive charts showing performance trends over time.
+        <br><br>
+        For now, check individual benchmark metrics using the View Metrics button above.
+    </div>
+</div>
+{% endblock %}
+"""
+
+REPORTS_TEMPLATE = """
+{% extends "base" %}
+{% block content %}
+<div class="card">
+    <h2>📄 Benchmark Reports</h2>
+    {% if benchmark_data %}
+    <div class="info">
+        <strong>💡 Tip:</strong> Reports are automatically generated when benchmarks complete.
+        If you don't see a report, make sure the benchmark has finished and artifacts were collected.
+    </div>
+    
+    <h3>Available Reports</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Benchmark</th>
+                <th>Service</th>
+                <th>Report Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in benchmark_data[:20] %}
+            <tr>
+                <td><strong>#{{ item.benchmark.benchmark_id }}</strong></td>
+                <td>{{ item.benchmark.service_name or '?' }}</td>
+                <td>
+                    {% if item.has_report %}
+                        <span style="color: #4caf50;">✓ Available</span>
+                    {% elif item.has_artifacts %}
+                        <span style="color: #2196f3;">📊 Ready to Generate</span>
+                    {% else %}
+                        <span style="color: #ff9800;">⏳ Needs Collection</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.has_report %}
+                        <a href="/benchmark/{{ item.benchmark.benchmark_id }}/report" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85rem;">View Report</a>
+                        {% if item.has_plots %}
+                        <a href="/benchmark/{{ item.benchmark.benchmark_id }}/plots" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85rem; margin-left: 5px;">View Plots</a>
+                        {% endif %}
+                    {% elif item.has_artifacts %}
+                        <a href="/benchmark/{{ item.benchmark.benchmark_id }}/report" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85rem;">Generate Report</a>
+                    {% else %}
+                        <a href="/benchmark/{{ item.benchmark.benchmark_id }}/collect" class="btn" style="padding: 5px 10px; font-size: 0.85rem;">Collect Artifacts</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="info">No benchmarks found. Run your first benchmark using the CLI!</div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>🔍 How to Generate Reports</h2>
+    <div class="code">
+# Reports are generated automatically when benchmarks complete!
+
+# Or generate manually:
+python src/frontend.py --report BENCHMARK_ID
+
+# Compare two benchmarks:
+python src/frontend.py --compare BASELINE_ID CURRENT_ID
+    </div>
+</div>
+{% endblock %}
+"""
+
 # =============================================================================
 # TEMPLATE RENDERING
 # =============================================================================
 
+
 def render(template_content, **kwargs):
     """Render a template with base template."""
     from jinja2 import Environment, BaseLoader
-    
+
     env = Environment(loader=BaseLoader())
-    
+
     # Register base template
     base_tmpl = env.from_string(BASE_TEMPLATE)
-    
+
     # Create child template that extends base
-    full_template = template_content.replace('{% extends "base" %}', '')
-    full_template = BASE_TEMPLATE.replace('{% block content %}{% endblock %}', 
-                                          full_template.replace('{% extends "base" %}', '')
-                                                      .replace('{% block content %}', '')
-                                                      .replace('{% endblock %}', ''))
-    
+    full_template = template_content.replace('{% extends "base" %}', "")
+    full_template = BASE_TEMPLATE.replace(
+        "{% block content %}{% endblock %}",
+        full_template.replace('{% extends "base" %}', "")
+        .replace("{% block content %}", "")
+        .replace("{% endblock %}", ""),
+    )
+
     tmpl = env.from_string(full_template)
     return tmpl.render(**kwargs)
 
@@ -422,66 +558,335 @@ def render(template_content, **kwargs):
 # ROUTES
 # =============================================================================
 
-@app.route('/')
+
+@app.route("/")
 def dashboard():
     benchmarks = list_all_benchmarks()
-    
+
     # Count by type
-    postgres = sum(1 for b in benchmarks if b.service_name and 'postgres' in b.service_name.lower())
-    llm = sum(1 for b in benchmarks if b.service_name and any(x in b.service_name.lower() for x in ['vllm', 'ollama']))
-    vector = sum(1 for b in benchmarks if b.service_name and 'chroma' in b.service_name.lower())
-    
-    return render(DASHBOARD_TEMPLATE,
-                  page='dashboard',
-                  benchmarks=benchmarks,
-                  total=len(benchmarks),
-                  postgres=postgres,
-                  llm=llm,
-                  vector=vector)
+    postgres = sum(
+        1 for b in benchmarks if b.service_name and "postgres" in b.service_name.lower()
+    )
+    llm = sum(
+        1
+        for b in benchmarks
+        if b.service_name
+        and any(x in b.service_name.lower() for x in ["vllm", "ollama"])
+    )
+    vector = sum(
+        1 for b in benchmarks if b.service_name and "chroma" in b.service_name.lower()
+    )
+
+    return render(
+        DASHBOARD_TEMPLATE,
+        page="dashboard",
+        benchmarks=benchmarks,
+        total=len(benchmarks),
+        postgres=postgres,
+        llm=llm,
+        vector=vector,
+    )
 
 
-@app.route('/benchmarks')
+@app.route("/benchmarks")
 def benchmarks_list():
     benchmarks = list_all_benchmarks()
-    return render(BENCHMARKS_TEMPLATE, page='benchmarks', benchmarks=benchmarks)
+    return render(BENCHMARKS_TEMPLATE, page="benchmarks", benchmarks=benchmarks)
 
 
-@app.route('/benchmark/<benchmark_id>')
+@app.route("/benchmark/<benchmark_id>")
 def benchmark_detail(benchmark_id):
     summary = get_benchmark_summary(benchmark_id)
     if not summary:
         return "Benchmark not found", 404
-    return render(BENCHMARK_DETAIL_TEMPLATE, page='benchmarks', summary=summary)
+    return render(BENCHMARK_DETAIL_TEMPLATE, page="benchmarks", summary=summary)
 
 
-@app.route('/cli')
+@app.route("/cli")
 def cli_reference():
-    return render(CLI_TEMPLATE, page='cli')
+    return render(CLI_TEMPLATE, page="cli")
 
 
-@app.route('/api/benchmarks')
+@app.route("/metrics")
+def metrics_page():
+    benchmarks = list_all_benchmarks()
+    return render(METRICS_TEMPLATE, page="metrics", benchmarks=benchmarks)
+
+
+@app.route("/reports")
+def reports_page():
+    benchmarks = list_all_benchmarks()
+
+    # Check which benchmarks have reports available
+    benchmark_data = []
+    for b in benchmarks:
+        report_path = Path(f"reports/{b.benchmark_id}/report.md")
+        plots_path = Path(f"reports/{b.benchmark_id}/plots/latency_percentiles.png")
+        requests_path = Path(f"results/{b.benchmark_id}/requests.jsonl")
+
+        benchmark_data.append(
+            {
+                "benchmark": b,
+                "has_report": report_path.exists(),
+                "has_plots": plots_path.exists(),
+                "has_artifacts": requests_path.exists(),
+            }
+        )
+
+    return render(REPORTS_TEMPLATE, page="reports", benchmark_data=benchmark_data)
+
+
+@app.route("/benchmark/<benchmark_id>/collect")
+def collect_artifacts(benchmark_id):
+    """Collect artifacts for a benchmark from the cluster."""
+    try:
+        # Get target from run.json
+        run_data = read_run_json(benchmark_id)
+        target = run_data.get("target", "meluxina") if run_data else "meluxina"
+
+        # Collect artifacts
+        success = collect_benchmark_artifacts(benchmark_id, target)
+
+        if success:
+            # Try to generate report automatically
+            try:
+                generate_benchmark_report(benchmark_id)
+                return redirect(f"/benchmark/{benchmark_id}/report")
+            except:
+                return redirect("/reports")
+        else:
+            return (
+                "Failed to collect artifacts. Make sure benchmark has completed.",
+                500,
+            )
+    except Exception as e:
+        return f"Error collecting artifacts: {e}", 500
+
+
+@app.route("/benchmark/<benchmark_id>/report")
+def benchmark_report(benchmark_id):
+    """Display the generated report for a benchmark."""
+    report_path = Path(f"reports/{benchmark_id}/report.md")
+    if not report_path.exists():
+        # Try to generate it if it doesn't exist
+        try:
+            generate_benchmark_report(benchmark_id)
+        except Exception as e:
+            return f"Report not found and could not be generated: {e}", 404
+
+    # Read and display the report
+    with open(report_path) as f:
+        report_content = f.read()
+
+    # Convert markdown to HTML for display
+    import markdown
+
+    html_content = markdown.markdown(
+        report_content, extensions=["tables", "fenced_code"]
+    )
+
+    report_template = """
+{% extends "base" %}
+{% block content %}
+<div class="card">
+    <h2>📄 Report for Benchmark #{{ benchmark_id }}</h2>
+    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px;">
+        {{ html_content | safe }}
+    </div>
+    <br>
+    <a href="/reports" class="btn btn-secondary">← Back to Reports</a>
+</div>
+{% endblock %}
+"""
+
+    return render(
+        report_template,
+        page="reports",
+        benchmark_id=benchmark_id,
+        html_content=html_content,
+    )
+
+
+@app.route("/benchmark/<benchmark_id>/plots")
+def benchmark_plots(benchmark_id):
+    """Display plots for a benchmark."""
+    plots_dir = Path(f"reports/{benchmark_id}/plots")
+    if not plots_dir.exists():
+        return "No plots found", 404
+
+    # List all plot files
+    plot_files = list(plots_dir.glob("*.png"))
+
+    plots_template = """
+{% extends "base" %}
+{% block content %}
+<div class="card">
+    <h2>📊 Plots for Benchmark #{{ benchmark_id }}</h2>
+    {% if plot_files %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px;">
+        {% for plot in plot_files %}
+            <div>
+                <h3>{{ plot.stem.replace('_', ' ').title() }}</h3>
+                <img src="/benchmark/{{ benchmark_id }}/plot/{{ plot.name }}" 
+                     style="width: 100%; border-radius: 8px; background: white;">
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="info">No plots found for this benchmark.</div>
+    {% endif %}
+    <br>
+    <a href="/reports" class="btn btn-secondary">← Back to Reports</a>
+</div>
+{% endblock %}
+"""
+
+    return render(
+        plots_template, page="reports", benchmark_id=benchmark_id, plot_files=plot_files
+    )
+
+
+@app.route("/benchmark/<benchmark_id>/plot/<plot_name>")
+def serve_plot(benchmark_id, plot_name):
+    """Serve individual plot files."""
+    # Use absolute path from project root
+    plot_path = (
+        Path(__file__).parent.parent.parent
+        / f"reports/{benchmark_id}/plots/{plot_name}"
+    )
+    if not plot_path.exists():
+        return "Plot not found", 404
+    return send_file(plot_path)
+
+
+@app.route("/benchmark/<benchmark_id>/metrics")
+def benchmark_metrics(benchmark_id):
+    """Display detailed metrics for a benchmark."""
+    # Try to read summary
+    summary = read_summary_json(benchmark_id)
+    if not summary:
+        # Try to generate it
+        try:
+            from aggregator import aggregate_benchmark
+
+            aggregate_benchmark(benchmark_id)
+            summary = read_summary_json(benchmark_id)
+            if not summary:
+                return (
+                    "Metrics not available. Ensure benchmark has completed and artifacts were collected.",
+                    404,
+                )
+        except Exception as e:
+            return (
+                f"Metrics not available: {e}<br><br>Make sure to run: python src/frontend.py --collect {benchmark_id}",
+                404,
+            )
+
+    metrics_template = """
+{% extends "base" %}
+{% block content %}
+<div class="card">
+    <h2>📊 Metrics for Benchmark #{{ benchmark_id }}</h2>
+    
+    <h3>Performance Summary</h3>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="value">{{ summary['total_requests'] }}</div>
+            <div class="label">Total Requests</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ "%.1f"|format(summary['success_rate']) }}%</div>
+            <div class="label">Success Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ "%.3f"|format(summary['latency_s']['avg']) }}s</div>
+            <div class="label">Avg Latency</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ "%.2f"|format(summary['requests_per_second']) }}</div>
+            <div class="label">RPS</div>
+        </div>
+    </div>
+    
+    <h3>Latency Percentiles</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>P50</th>
+                <th>P90</th>
+                <th>P95</th>
+                <th>P99</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ "%.3f"|format(summary['latency_s']['p50']) }}s</td>
+                <td>{{ "%.3f"|format(summary['latency_s']['p90']) }}s</td>
+                <td>{{ "%.3f"|format(summary['latency_s']['p95']) }}s</td>
+                <td>{{ "%.3f"|format(summary['latency_s']['p99']) }}s</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    {% if summary.get('error_summary') %}
+    <h3>Error Summary</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Error Type</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for error, count in summary['error_summary'].items() %}
+            <tr>
+                <td>{{ error }}</td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <br>
+    <a href="/metrics" class="btn btn-secondary">← Back to Metrics</a>
+</div>
+{% endblock %}
+"""
+
+    return render(
+        metrics_template, page="metrics", benchmark_id=benchmark_id, summary=summary
+    )
+
+
+@app.route("/api/benchmarks")
 def api_benchmarks():
     """API endpoint for benchmarks list."""
     benchmarks = list_all_benchmarks()
-    return jsonify([{
-        'id': b.benchmark_id,
-        'service_name': b.service_name,
-        'service_job_id': b.service_job_id,
-        'num_clients': b.num_clients,
-        'created_at': b.created_at.isoformat() if b.created_at else None
-    } for b in benchmarks])
+    return jsonify(
+        [
+            {
+                "id": b.benchmark_id,
+                "service_name": b.service_name,
+                "service_job_id": b.service_job_id,
+                "num_clients": b.num_clients,
+                "created_at": b.created_at.isoformat() if b.created_at else None,
+            }
+            for b in benchmarks
+        ]
+    )
 
 
 # =============================================================================
 # MAIN
 # =============================================================================
 
-if __name__ == '__main__':
-    print("\n" + "="*50)
+if __name__ == "__main__":
+    print("\n" + "=" * 50)
     print("AI Factory Benchmark")
-    print("="*50)
+    print("=" * 50)
     print("\n   Open http://localhost:5000 in your browser\n")
     print("   Press Ctrl+C to stop\n")
-    print("="*50 + "\n")
-    
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("=" * 50 + "\n")
+
+    app.run(host="0.0.0.0", port=5000, debug=True)

@@ -1,0 +1,31 @@
+# Apptainer definition file for Prometheus
+# Build: apptainer build prometheus.sif prometheus.def
+
+Bootstrap: docker
+From: prom/prometheus:latest
+
+%labels
+    Author AI Factory Benchmarking Team
+    Version 1.0
+    Description Prometheus monitoring server for benchmark metrics
+
+%files
+    ../config/prometheus.yml /etc/prometheus/prometheus.yml
+
+%runscript
+    exec /bin/prometheus \
+        --config.file=/etc/prometheus/prometheus.yml \
+        --storage.tsdb.path=/prometheus \
+        --web.listen-address=0.0.0.0:9090 \
+        --web.enable-lifecycle
+
+%help
+    Prometheus monitoring server for AI Factory Benchmarking Framework.
+    
+    Usage:
+        apptainer run prometheus.sif
+        
+    Default port: 9090
+    
+    To access from your laptop, set up SSH tunnel:
+        ssh -L 9090:$NODE:9090 meluxina

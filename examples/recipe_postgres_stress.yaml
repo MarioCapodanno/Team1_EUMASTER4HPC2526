@@ -39,8 +39,8 @@ client:
   time_limit: "01:00:00"
   
   settings:
-    num_inserts: 10000          # Number of INSERT operations
-    num_selects: 5000           # Number of SELECT operations
+    num_inserts: 1000           # Number of INSERT operations (reduced from 10000)
+    num_selects: 500            # Number of SELECT operations (reduced from 5000)
     table_name: "stress_test"   # Table name to use
     warmup_delay: 5             # Seconds to wait before starting
 

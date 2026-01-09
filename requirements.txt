@@ -4,14 +4,19 @@
 fabric>=3.0.0          # SSH communication with cluster
 paramiko>=3.0.0        # SSH protocol implementation (used by fabric)
 pyyaml>=6.0            # YAML recipe parsing
+gitpython>=3.1.0       # Git commit tracking for reproducibility
+numpy>=1.23.0          # Numerical operations for percentile calculations
+
+# Reporting and visualization
+matplotlib>=3.7.0      # Plot generation for reports
 
 # Web UI
 flask>=3.0.0           # Lightweight web UI (Python 3.14 compatible)
 jinja2>=3.1.0          # Template engine for Flask
-# streamlit>=1.28.0    # Alternative UI (requires Python <3.14)
+markdown>=3.5.0        # Markdown to HTML conversion for reports
 
 # Optional: for future enhancements
+# streamlit>=1.28.0    # Alternative UI (requires Python <3.14)
 # gradio>=4.0.0        # Alternative Web UI (optional)
-# matplotlib>=3.7.0    # Charts in reports (optional)
 # pandas>=2.0.0        # Data analysis (optional)
 # prometheus_client>=0.17.0  # Prometheus metrics export (optional)

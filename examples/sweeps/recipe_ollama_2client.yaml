@@ -1,0 +1,31 @@
+# Ollama Stress Test - 2 Clients
+configuration:
+  target: "meluxina"
+
+service:
+  type: "ollama"
+  name: "ollama-sweep-2"
+  partition: "gpu"
+  num_gpus: 1
+  time_limit: "02:00:00"
+  account: "p200981"
+  
+  settings:
+    model: "llama2"
+    warmup_seconds: 30
+
+client:
+  type: "ollama_stress"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "01:00:00"
+  
+  settings:
+    model: "llama2"
+    num_requests: 20
+    max_tokens: 50
+    warmup_delay: 30
+
+benchmarks:
+  num_clients: 2
+  metrics: ["latency", "throughput", "tokens_per_second"]

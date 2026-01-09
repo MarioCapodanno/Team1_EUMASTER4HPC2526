@@ -1,0 +1,44 @@
+# Prometheus configuration for AI Factory Benchmarking Framework
+# This file is used by the Prometheus container to scrape metrics
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'ai-factory-benchmark'
+
+# Alerting configuration (optional)
+alerting:
+  alertmanagers: []
+
+# Rule files (optional)
+rule_files: []
+
+# Scrape configurations
+scrape_configs:
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Scrape Pushgateway for benchmark metrics
+  - job_name: 'pushgateway'
+    honor_labels: true
+    static_configs:
+      - targets: ['localhost:9091']
+
+  # Scrape Flask GUI metrics endpoint
+  # Note: Update the target to match your Flask server location
+  - job_name: 'benchmark-flask'
+    metrics_path: '/api/metrics/prometheus'
+    static_configs:
+      - targets: ['localhost:5000']
+    scrape_interval: 30s
+
+  # Scrape individual benchmark metrics (dynamically configured)
+  # This job uses file-based service discovery
+  - job_name: 'benchmark-services'
+    file_sd_configs:
+      - files:
+          - '/etc/prometheus/targets/*.json'
+        refresh_interval: 30s
