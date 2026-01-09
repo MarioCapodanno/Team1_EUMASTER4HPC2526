@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
-from command_builders import (
+from builders.command_builders import (
     build_client_command,
     build_service_command,
     get_default_env,
@@ -28,23 +28,23 @@ from command_builders import (
     validate_service_type,
     validate_settings,
 )
-from health import check_http_health, wait_for_service_healthy
-from manager import Manager
-from monitor import (
+from infra.health import check_http_health, wait_for_service_healthy
+from core.manager import Manager
+from monitoring.monitor import (
     BenchmarkMetrics,
     MetricsCollector,
     format_metrics_report,
 )
-from storage import (
+from infra.storage import (
     format_benchmark_summary,
     format_benchmark_table,
     get_benchmark_summary,
     list_all_benchmarks,
 )
-from artifacts import write_run_json, ensure_results_dir
-from aggregator import aggregate_benchmark, compare_summaries
-from reporter import generate_benchmark_report
-from collector import collect_benchmark_artifacts, auto_collect_if_complete
+from reporting.artifacts import write_run_json, ensure_results_dir
+from core.aggregator import aggregate_benchmark, compare_summaries
+from reporting.reporter import generate_benchmark_report
+from core.collector import collect_benchmark_artifacts, auto_collect_if_complete
 
 
 @dataclass
@@ -480,7 +480,7 @@ def ui_show_summary():
         print(format_benchmark_summary(summary))
         
         # Also show metrics if available locally
-        from artifacts import read_summary_json
+        from reporting.artifacts import read_summary_json
         metrics = read_summary_json(bid)
         if metrics:
             print(f"\nPerformance Metrics:")
@@ -509,7 +509,7 @@ def ui_watch_status():
         return
 
     # Check if benchmark is already completed by looking at local artifacts
-    from artifacts import read_summary_json
+    from reporting.artifacts import read_summary_json
     metrics = read_summary_json(bid)
     if metrics:
         print(f"\n✓ Benchmark {bid} is already completed!")
@@ -632,7 +632,7 @@ def ui_show_logs():
                 logs = manager.tail_logs(num_lines=30)
 
                 # Save logs locally for future use
-                from artifacts import ensure_results_dir
+                from reporting.artifacts import ensure_results_dir
                 results_dir = ensure_results_dir(bid)
                 logs_dir = results_dir / "logs"
                 logs_dir.mkdir(exist_ok=True)
@@ -1036,7 +1036,7 @@ def cmd_list_benchmarks():
 
 def cmd_show_summary(benchmark_id: str):
     """Handle --summary command."""
-    from artifacts import read_summary_json
+    from reporting.artifacts import read_summary_json
     
     summary = get_benchmark_summary(benchmark_id)
     if summary:
@@ -1102,7 +1102,7 @@ def cmd_show_logs(benchmark_id: str):
                 logs = manager.tail_logs(num_lines=50)
 
                 # Save logs locally for future use
-                from artifacts import ensure_results_dir
+                from reporting.artifacts import ensure_results_dir
                 results_dir = ensure_results_dir(benchmark_id)
                 logs_dir = results_dir / "logs"
                 logs_dir.mkdir(exist_ok=True)
@@ -1189,7 +1189,7 @@ def cmd_watch_benchmark(benchmark_id: str):
         return 1
     
     # Check if benchmark is already completed
-    from artifacts import read_summary_json
+    from reporting.artifacts import read_summary_json
     metrics = read_summary_json(benchmark_id)
     if metrics:
         print(f"Benchmark {benchmark_id} is already completed!")
@@ -1242,7 +1242,7 @@ def cmd_collect_artifacts(benchmark_id: str):
         return 1
     
     # Get target from run.json if available
-    from artifacts import read_run_json
+    from reporting.artifacts import read_run_json
     run_data = read_run_json(benchmark_id)
     target = run_data.get("target", "meluxina") if run_data else "meluxina"
     
@@ -1264,7 +1264,7 @@ def cmd_compare_benchmarks(baseline_id: str, current_id: str):
     print(f"Comparing benchmarks: baseline={baseline_id}, current={current_id}\n")
     
     # Load summaries
-    from artifacts import read_run_json
+    from reporting.artifacts import read_run_json
     
     baseline_file = Path(f"results/{baseline_id}/summary.json")
     current_file = Path(f"results/{current_id}/summary.json")

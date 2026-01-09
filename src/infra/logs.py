@@ -15,8 +15,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from communicator import SSHCommunicator
-from storage import get_benchmark_summary
+from infra.communicator import SSHCommunicator
+from infra.storage import get_benchmark_summary
 
 
 @dataclass

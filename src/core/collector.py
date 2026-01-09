@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from communicator import SSHCommunicator
+from infra.communicator import SSHCommunicator
 
 
 def collect_benchmark_artifacts(benchmark_id: str, target: str = "meluxina") -> bool:

@@ -14,13 +14,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from flask import Flask, jsonify, redirect, send_file
 
-from storage import (
+from infra.storage import (
     list_all_benchmarks,
     get_benchmark_summary,
 )
-from artifacts import read_run_json, read_summary_json
-from reporter import generate_benchmark_report
-from collector import collect_benchmark_artifacts
+from reporting.artifacts import read_run_json, read_summary_json
+from reporting.reporter import generate_benchmark_report
+from core.collector import collect_benchmark_artifacts
 
 app = Flask(__name__)
 

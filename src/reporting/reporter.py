@@ -10,11 +10,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from artifacts import read_run_json, ensure_reports_dir
+from reporting.artifacts import read_run_json, ensure_reports_dir
 
 # Optional plotting support
 try:
-    from plotting import generate_plots
+    from reporting.plotting import generate_plots
 
     HAS_PLOTTING = True
 except ImportError:

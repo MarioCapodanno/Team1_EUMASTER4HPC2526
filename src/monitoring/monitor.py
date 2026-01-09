@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
-from communicator import SSHCommunicator
+from infra.communicator import SSHCommunicator
 
 
 @dataclass
