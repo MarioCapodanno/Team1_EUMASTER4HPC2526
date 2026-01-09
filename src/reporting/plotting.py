@@ -340,7 +340,7 @@ def generate_plots(
     Returns:
         Dictionary mapping plot names to file paths
     """
-    from artifacts import ensure_reports_dir
+    from reporting.artifacts import ensure_reports_dir
 
     reports_dir = ensure_reports_dir(benchmark_id)
     plots_dir = reports_dir / "plots"

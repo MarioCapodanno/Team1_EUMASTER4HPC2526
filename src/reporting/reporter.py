@@ -590,8 +590,8 @@ def generate_benchmark_report(
     """
     # Load summary if not provided
     if not summary:
-        from artifacts import read_requests_jsonl
-        from aggregator import aggregate_requests
+        from reporting.artifacts import read_requests_jsonl
+        from core.aggregator import aggregate_requests
 
         print("  Loading request data...")
         requests = read_requests_jsonl(benchmark_id)
@@ -602,12 +602,12 @@ def generate_benchmark_report(
         summary = aggregate_requests(requests)
 
         # Write summary.json
-        from aggregator import write_summary_json
+        from core.aggregator import write_summary_json
 
         write_summary_json(benchmark_id, summary)
     else:
         # Load requests for plotting if needed
-        from artifacts import read_requests_jsonl
+        from reporting.artifacts import read_requests_jsonl
 
         requests = read_requests_jsonl(benchmark_id)
 

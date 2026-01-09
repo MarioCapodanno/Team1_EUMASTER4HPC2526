@@ -18,4 +18,4 @@ from .storage import (
     list_all_benchmarks,
 )
 from .health import check_http_health, wait_for_service_healthy
-from .logs import get_log_files, tail_log_file
+from .logs import LogManager, LogEntry, LogFile
