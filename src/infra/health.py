@@ -7,7 +7,7 @@ before deploying clients.
 """
 
 import time
-from communicator import SSHCommunicator
+from infra.communicator import SSHCommunicator
 
 
 def check_http_health(

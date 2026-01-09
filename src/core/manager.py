@@ -18,10 +18,10 @@ from typing import Optional, List, Dict
 
 # TODO: maybe here we should import and use the create_communicator factory method
 # but it works so leave it for now
-from communicator import SSHCommunicator
-from service import Service
-from client import Client
-from storage import get_storage_manager, StorageManager
+from infra.communicator import SSHCommunicator
+from infra.storage import get_storage_manager, StorageManager
+from models.service import Service
+from models.client import Client
 
 
 class Manager:
