@@ -268,7 +268,7 @@ def aggregate_benchmark(benchmark_id: str) -> Optional[Dict[str, Any]]:
     Returns:
         Summary metrics dictionary, or None if requests file not found
     """
-    from artifacts import read_requests_jsonl
+    from reporting.artifacts import read_requests_jsonl
 
     # Load requests
     requests = read_requests_jsonl(benchmark_id)
