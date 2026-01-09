@@ -1,0 +1,39 @@
+# Apptainer definition file for Grafana
+# Build: apptainer build grafana.sif grafana.def
+
+Bootstrap: docker
+From: grafana/grafana:latest
+
+%labels
+    Author AI Factory Benchmarking Team
+    Version 1.0
+    Description Grafana dashboard server for benchmark visualization
+
+%files
+    ../config/grafana/provisioning /etc/grafana/provisioning
+    ../config/grafana/dashboards /var/lib/grafana/dashboards
+
+%environment
+    export GF_SECURITY_ADMIN_PASSWORD=benchmark
+    export GF_USERS_ALLOW_SIGN_UP=false
+    export GF_AUTH_ANONYMOUS_ENABLED=true
+    export GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+
+%runscript
+    exec /run.sh
+
+%help
+    Grafana dashboard server for AI Factory Benchmarking Framework.
+    
+    Usage:
+        apptainer run grafana.sif
+        
+    Default port: 3000
+    Default credentials: admin / benchmark
+    
+    To access from your laptop, set up SSH tunnel:
+        ssh -L 3000:$NODE:3000 meluxina
+    
+    Pre-loaded dashboards:
+        - LLM Inference Metrics
+        - Database Benchmark Metrics

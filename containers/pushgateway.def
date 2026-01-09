@@ -1,0 +1,28 @@
+# Apptainer definition file for Prometheus Pushgateway
+# Build: apptainer build pushgateway.sif pushgateway.def
+
+Bootstrap: docker
+From: prom/pushgateway:latest
+
+%labels
+    Author AI Factory Benchmarking Team
+    Version 1.0
+    Description Pushgateway for pushing benchmark metrics to Prometheus
+
+%runscript
+    exec /bin/pushgateway \
+        --web.listen-address=0.0.0.0:9091 \
+        --persistence.file=/tmp/pushgateway_metrics
+
+%help
+    Prometheus Pushgateway for AI Factory Benchmarking Framework.
+    
+    Benchmark clients push metrics here, and Prometheus scrapes from here.
+    
+    Usage:
+        apptainer run pushgateway.sif
+        
+    Default port: 9091
+    
+    Push metrics example:
+        echo "benchmark_requests_total 100" | curl --data-binary @- http://localhost:9091/metrics/job/benchmark
