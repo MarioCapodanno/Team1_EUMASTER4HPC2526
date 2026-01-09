@@ -1,0 +1,30 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "qdrant-vectordb"
+  type: "qdrant"
+  partition: "cpu"
+  nodes: 1
+  time_limit: "00:30:00"
+  settings:
+    port: 6333
+
+client:
+  name: "qdrant-benchmark"
+  type: "qdrant_stress"
+  partition: "cpu"
+  nodes: 1
+  time_limit: "00:25:00"
+  settings:
+    collection: "benchmark"
+    dim: 128
+    num_points: 1000
+    batch_size: 100
+    num_queries: 100
+    top_k: 10
+    warmup_delay: 10
+
+benchmarks:
+  num_clients: 1
+  client_delay: 5

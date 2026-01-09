@@ -1,0 +1,29 @@
+configuration:
+  target: "meluxina"
+
+service:
+  name: "redis-stress"
+  type: "redis"
+  partition: "cpu"
+  nodes: 1
+  time_limit: "01:00:00"
+  settings:
+    port: 6379
+    maxmemory: "4gb"
+    maxmemory_policy: "allkeys-lru"
+
+client:
+  name: "redis-stress-client"
+  type: "redis_stress"
+  partition: "cpu"
+  nodes: 1
+  time_limit: "00:50:00"
+  settings:
+    num_requests: 10000
+    key_size_bytes: 32
+    value_size_bytes: 256
+    warmup_delay: 10
+
+benchmarks:
+  num_clients: 4
+  client_delay: 5
