@@ -477,6 +477,7 @@ class BenchmarkInfo:
     service_job_id: Optional[str] = None
     num_clients: int = 0
     created_at: Optional[datetime] = None
+    status: str = "?"
 
 
 @dataclass
@@ -500,24 +501,66 @@ class BenchmarkSummary:
 def list_all_benchmarks() -> List[BenchmarkInfo]:
     """
     List all benchmarks in storage with basic info.
+    
+    Merges benchmarks from:
+    1. .benchmark_storage/ (runtime storage with service/client info)
+    2. results/ directory (artifact storage with run.json/requests.jsonl)
 
     Returns:
         List of BenchmarkInfo objects sorted by ID (newest first)
     """
+    import json
+    from pathlib import Path
+    
     storage = get_storage_manager()
-    benchmark_ids = storage.list_benchmarks()
+    benchmark_ids = set(storage.list_benchmarks())
+    
+    # Also check results/ directory for benchmarks with artifacts
+    results_dir = Path("results")
+    if results_dir.exists():
+        for d in results_dir.iterdir():
+            if d.is_dir() and (d / "run.json").exists():
+                benchmark_ids.add(d.name)
 
     benchmarks = []
     for bid in benchmark_ids:
+        # Generate sort key - handle both numeric and BM-YYYYMMDD-NNN formats
         try:
-            # Try to parse as int for sorting
             int_id = int(bid)
+            sort_key = (0, int_id)  # Numeric IDs: sort by number
         except ValueError:
-            int_id = 0
+            # BM-YYYYMMDD-NNN format: extract date and sequence
+            if bid.startswith("BM-"):
+                parts = bid.split("-")
+                if len(parts) >= 3:
+                    try:
+                        date_part = int(parts[1])  # YYYYMMDD
+                        seq_part = int(parts[2])   # NNN
+                        sort_key = (1, date_part, seq_part)  # Sort by date then sequence
+                    except ValueError:
+                        sort_key = (2, bid)  # Fallback: sort alphabetically
+                else:
+                    sort_key = (2, bid)
+            else:
+                sort_key = (2, bid)
 
         info = BenchmarkInfo(benchmark_id=bid)
 
-        # Try to load service info
+        # Determine status
+        # If summary.json exists -> COMPLETED
+        # Else if run.json exists -> RUNNING
+        # Else -> UNKNOWN
+        summary_path = results_dir / bid / "summary.json"
+        run_path = results_dir / bid / "run.json"
+        
+        if summary_path.exists():
+            info.status = "COMPLETED"
+        elif run_path.exists():
+            info.status = "RUNNING"
+        else:
+            info.status = "?"
+
+        # Try to load service info from storage
         services = storage.load_all_entities(bid, "service")
         if services:
             svc = services[0]  # Usually one service per benchmark
@@ -528,13 +571,38 @@ def list_all_benchmarks() -> List[BenchmarkInfo]:
             if submit_time and isinstance(submit_time, datetime):
                 info.created_at = submit_time
 
-        # Count clients
+        # Count clients from storage
         clients = storage.load_all_entities(bid, "client")
         info.num_clients = len(clients)
+        
+        # If no storage info, try to get info from run.json in results/
+        if not info.service_name:
+            run_json_path = results_dir / bid / "run.json"
+            if run_json_path.exists():
+                try:
+                    with open(run_json_path) as f:
+                        run_data = json.load(f)
+                    # Extract service info from run.json
+                    service_info = run_data.get("service", {})
+                    info.service_name = service_info.get("name") or run_data.get("service_type")
+                    info.service_job_id = service_info.get("job_id")
+                    # Extract client count
+                    client_info = run_data.get("clients", [])
+                    if client_info:
+                        info.num_clients = len(client_info)
+                    # Extract created_at timestamp
+                    created_at = run_data.get("created_at")
+                    if created_at and not info.created_at:
+                        try:
+                            info.created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                        except (ValueError, AttributeError):
+                            pass
+                except (json.JSONDecodeError, IOError):
+                    pass
 
-        benchmarks.append((int_id, info))
+        benchmarks.append((sort_key, info))
 
-    # Sort by ID descending (newest first)
+    # Sort by sort_key descending (newest first)
     benchmarks.sort(key=lambda x: x[0], reverse=True)
     return [b[1] for b in benchmarks]
 
@@ -549,16 +617,25 @@ def get_benchmark_summary(benchmark_id: str) -> Optional[BenchmarkSummary]:
     Returns:
         BenchmarkSummary object or None if not found
     """
+    import json
+    from pathlib import Path
+    
     storage = get_storage_manager()
 
-    # Check if benchmark exists
-    all_ids = storage.list_benchmarks()
+    # Check if benchmark exists in storage or results directory
+    all_ids = set(storage.list_benchmarks())
+    results_dir = Path("results")
+    if results_dir.exists():
+        for d in results_dir.iterdir():
+            if d.is_dir() and (d / "run.json").exists():
+                all_ids.add(d.name)
+    
     if benchmark_id not in all_ids:
         return None
 
     summary = BenchmarkSummary(benchmark_id=benchmark_id)
 
-    # Load service info
+    # Load service info from storage
     services = storage.load_all_entities(benchmark_id, "service")
     if services:
         svc = services[0]
@@ -574,7 +651,7 @@ def get_benchmark_summary(benchmark_id: str) -> Optional[BenchmarkSummary]:
         working_dir = svc.get("working_dir", f"~/benchmark_{benchmark_id}")
         summary.log_dir = f"{working_dir}/logs"
 
-    # Load client info
+    # Load client info from storage
     clients = storage.load_all_entities(benchmark_id, "client")
     for client in clients:
         summary.clients.append(
@@ -585,6 +662,42 @@ def get_benchmark_summary(benchmark_id: str) -> Optional[BenchmarkSummary]:
                 "service_name": client.get("service_name"),
             }
         )
+    
+    # If no storage info, try to get info from run.json in results/
+    if not summary.service_name:
+        run_json_path = results_dir / benchmark_id / "run.json"
+        if run_json_path.exists():
+            try:
+                with open(run_json_path) as f:
+                    run_data = json.load(f)
+                # Extract service info from run.json
+                service_info = run_data.get("service", {})
+                summary.service_name = service_info.get("name") or run_data.get("service_type")
+                summary.service_job_id = service_info.get("job_id")
+                summary.service_hostname = service_info.get("hostname")
+                summary.service_image = service_info.get("container_image") or service_info.get("image")
+                # Extract client count
+                client_info = run_data.get("clients", [])
+                if client_info and not summary.clients:
+                    for c in client_info:
+                        summary.clients.append({
+                            "name": c.get("name"),
+                            "job_id": c.get("job_id"),
+                            "hostname": c.get("hostname"),
+                            "service_name": summary.service_name,
+                        })
+                # Extract created_at timestamp
+                created_at = run_data.get("created_at")
+                if created_at and not summary.created_at:
+                    try:
+                        summary.created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    except (ValueError, AttributeError):
+                        pass
+                # Set log directory
+                if not summary.log_dir:
+                    summary.log_dir = f"~/benchmark_{benchmark_id}/logs"
+            except (json.JSONDecodeError, IOError):
+                pass
 
     return summary
 
@@ -604,8 +717,8 @@ def format_benchmark_table(benchmarks: List[BenchmarkInfo]) -> str:
 
     # Header
     lines = [
-        f"{'ID':<6} {'Service':<25} {'Job ID':<12} {'Clients':<8} {'Created'}",
-        "-" * 75,
+        f"{'ID':<6} {'Service':<25} {'Job ID':<12} {'Status':<10} {'Clients':<8} {'Created'}",
+        "-" * 85,
     ]
 
     for b in benchmarks:
@@ -613,7 +726,7 @@ def format_benchmark_table(benchmarks: List[BenchmarkInfo]) -> str:
         service = (b.service_name or "?")[:24]
         job_id = str(b.service_job_id or "?")[:11]
         lines.append(
-            f"{b.benchmark_id:<6} {service:<25} {job_id:<12} {b.num_clients:<8} {created}"
+            f"{b.benchmark_id:<6} {service:<25} {job_id:<12} {b.status:<10} {b.num_clients:<8} {created}"
         )
 
     return "\n".join(lines)
@@ -646,8 +759,9 @@ def format_benchmark_summary(summary: BenchmarkSummary) -> str:
     if summary.clients:
         lines.append(f"Clients ({len(summary.clients)}):")
         for c in summary.clients:
+            hostname = c.get('hostname') or '?'
             lines.append(
-                f"  - {c.get('name', '?')} (Job {c.get('job_id', '?')}) on {c.get('hostname', '?')}"
+                f"  - {c.get('name', '?')} (Job {c.get('job_id', '?')}) on {hostname}"
             )
     else:
         lines.append("Clients: None")

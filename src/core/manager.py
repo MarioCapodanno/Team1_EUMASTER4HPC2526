@@ -111,6 +111,14 @@ class Manager:
         num_nodes: int = 1,
         num_gpus: int = 1,
         env_vars: Optional[Dict[str, str]] = None,
+        gpus_per_node: Optional[int] = None,
+        cpus_per_task: Optional[int] = None,
+        memory: Optional[str] = None,
+        constraints: Optional[str] = None,
+        exclude_nodes: Optional[str] = None,
+        volumes: Optional[List[str]] = None,
+        modules: Optional[List[str]] = None,
+        pre_run_commands: Optional[List[str]] = None,
     ) -> str:
         """
         Create an sbatch script for deploying a service.
@@ -142,7 +150,42 @@ class Manager:
                 [f"--env {key}='{value}'" for key, value in env_vars.items()]
             )
 
-        # Simple f-string template for now (can be replaced with Jinja2 later)
+        # Build GPU directive
+        # Prefer explicit gpus_per_node if provided, else use num_gpus if > 0
+        if gpus_per_node is not None:
+            gpu_directive = f"#SBATCH --gpus-per-node={gpus_per_node}"
+            use_gpu = True
+        elif num_gpus > 0:
+            gpu_directive = f"#SBATCH --gpus={num_gpus}"
+            use_gpu = True
+        else:
+            gpu_directive = ""
+            use_gpu = False
+
+        # Use --nv flag only when GPUs are requested
+        nv_flag = "--nv" if use_gpu else ""
+
+        # Build other directives
+        cpu_directive = f"#SBATCH --cpus-per-task={cpus_per_task}" if cpus_per_task else ""
+        mem_directive = f"#SBATCH --mem={memory}" if memory else ""
+        constraint_directive = f"#SBATCH --constraint={constraints}" if constraints else ""
+        exclude_directive = f"#SBATCH --exclude={exclude_nodes}" if exclude_nodes else ""
+
+        # Build apptainer volumes
+        if volumes:
+            bind_opts = " ".join([f"--bind {v}" for v in volumes])
+            apptainer_opts = f"{apptainer_opts} {bind_opts}"
+
+        # Build modules loading
+        module_loads = ""
+        if modules:
+            module_loads = "\n".join([f"module load {m}" for m in modules])
+
+        # Build pre-run commands
+        pre_run = ""
+        if pre_run_commands:
+            pre_run = "\n".join(pre_run_commands)
+        
         script = f"""#!/bin/bash -l
 #SBATCH --job-name={service_name}
 #SBATCH --time={time_limit}
@@ -152,7 +195,11 @@ class Manager:
 #SBATCH --nodes={num_nodes}
 #SBATCH --ntasks={num_nodes}
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus={num_gpus}
+{gpu_directive}
+{cpu_directive}
+{mem_directive}
+{constraint_directive}
+{exclude_directive}
 #SBATCH --output={self.abs_working_dir}/logs/{service_name}_%j.out
 #SBATCH --error={self.abs_working_dir}/logs/{service_name}_%j.err
 
@@ -163,28 +210,50 @@ echo "Hostname: $(hostname -s)"
 echo "Working Directory: $(pwd)"
 echo "==============================================="
 
+# Write service information EARLY so clients can discover us
+# This MUST happen before container pull (which can be slow)
+echo "$(hostname)" > {self.working_dir}/{service_name}.hostname
+echo "$SLURM_JOB_ID" > {self.working_dir}/{service_name}.jobid
+
 # Load required modules
 module add Apptainer
-
-# Pull container image if not already present
-echo "Pulling container image: {container_image}"
-apptainer pull docker://{container_image}
+{module_loads}
 
 # Extract image name for the .sif file
 IMAGE_NAME=$(echo {container_image} | sed 's|.*/||' | sed 's|:.*||')
 SIF_FILE="${{IMAGE_NAME}}_latest.sif"
 
-echo "Running container: $SIF_FILE"
+# Pull container image if not already present
+if [ ! -f "$SIF_FILE" ]; then
+  echo "Pulling container image: {container_image}"
+  apptainer pull docker://{container_image}
+else
+  echo "Using cached container: $SIF_FILE"
+fi
 
-# Write service information to a file that can be read later
-echo "$(hostname)" > {self.working_dir}/{service_name}.hostname
-echo "$SLURM_JOB_ID" > {self.working_dir}/{service_name}.jobid
+echo "Running container: $SIF_FILE"
 
 # Set up environment variables for the container
 {env_vars_setup}
 
+# Pre-run commands
+{pre_run}
+
+
+# MONITORING SIDECAR
+# ------------------
+# Run hardware scraper in background (exposes metrics on port 8010)
+echo "Starting hardware scraper..."
+SCRAPER_SCRIPT="{self.abs_working_dir}/scripts/scraper.py"
+if [ -f "$SCRAPER_SCRIPT" ]; then
+    python3 "$SCRAPER_SCRIPT" --service-name "{service_name}" > {self.abs_working_dir}/logs/scraper_{service_name}.out 2>&1 &
+    echo "Scraper started with PID $!"
+else
+    echo "Warning: Scraper script not found at $SCRAPER_SCRIPT"
+fi
+
 # Run the service
-apptainer exec --nv {apptainer_opts} "$SIF_FILE" {service_command}
+apptainer exec {nv_flag} {apptainer_opts} "$SIF_FILE" {service_command}
 """
         return script
 
@@ -270,9 +339,20 @@ echo "$SLURM_JOB_ID" > {self.working_dir}/{client_name}.jobid
 # Create metrics directory
 mkdir -p {self.working_dir}/metrics
 
+# Start Heartbeat (for real-time monitoring across nodes)
+# Touch a file every 2 seconds so scraper knows we are alive
+HEARTBEAT_FILE="{self.abs_working_dir}/heartbeat_{client_name}"
+echo "Starting heartbeat at $HEARTBEAT_FILE"
+(while true; do touch "$HEARTBEAT_FILE"; sleep 2; done) &
+HEARTBEAT_PID=$!
+
 # Run the benchmark command
 echo "Running benchmark command..."
 {benchmark_command}
+
+# Stop Heartbeat
+kill $HEARTBEAT_PID 2>/dev/null
+rm -f "$HEARTBEAT_FILE"
 
 echo "Benchmark completed at $(date)"
 """
@@ -343,12 +423,16 @@ echo "Benchmark completed at $(date)"
             # Poll for hostname with exponential backoff
             print("Waiting for service hostname to be available...")
             service_hostname = self._wait_for_service_hostname(
-                service_name, max_wait_time=60
+                service_name, max_wait_time=120  # Increased for GPU services
             )
             if service_hostname:
                 print(f"✓ Retrieved service hostname: {service_hostname}")
             else:
-                print("Error: Service hostname not available within timeout period")
+                # FAIL-FAST: Cancel service job since we can't connect clients to it
+                print("\n❌ FAIL-FAST: Hostname not available. Cancelling service job...")
+                if service.job_id:
+                    self.cancel_job(service.job_id)
+                print("   Benchmark aborted. No resources wasted.")
                 return None
 
         # Construct SERVICE_URL in Python to avoid None string issues
@@ -408,7 +492,9 @@ echo "Benchmark completed at $(date)"
         # Wait for job to start if requested
         if wait_for_start:
             print(f"Waiting for client job to start (max {max_wait_time}s)...")
-            if self._wait_for_job_to_start(job_id, max_wait_time):
+            job_started, final_status = self._wait_for_job_to_start(job_id, max_wait_time)
+            
+            if job_started:
                 print("✓ Client job is running")
 
                 # Update client with runtime information
@@ -424,7 +510,7 @@ echo "Benchmark completed at $(date)"
                 # Save updated state
                 client.save(self.benchmark_id, self.storage_manager)
             else:
-                print(f"Warning: Client job did not start within {max_wait_time}s")
+                print(f"Warning: Client job did not start within {max_wait_time}s (status: {final_status})")
 
         return client
 
@@ -435,6 +521,9 @@ echo "Benchmark completed at $(date)"
         num_clients: int,
         client_name_prefix: str = "client",
         service: Optional[Service] = None,
+        service_type: Optional[str] = None,
+        expected_model: Optional[str] = None,
+        ready_check_timeout: int = 300,
         **sbatch_kwargs,
     ) -> List[Client]:
         """
@@ -446,6 +535,9 @@ echo "Benchmark completed at $(date)"
             num_clients: Number of clients to deploy
             client_name_prefix: Prefix for client names (will be numbered)
             service: Optional Service object (will be loaded if not provided)
+            service_type: Type of service (ollama, vllm, etc.) for health checks
+            expected_model: For LLM services, the model that should be loaded
+            ready_check_timeout: Seconds to wait for service readiness
             **sbatch_kwargs: Additional sbatch parameters
 
         Returns:
@@ -461,6 +553,40 @@ echo "Benchmark completed at $(date)"
                 return clients
 
         print(f"\nDeploying {num_clients} client(s) for service '{service_name}'...")
+
+        # Get hostname first (needed for readiness check)
+        service_hostname = service.hostname
+        if not service_hostname:
+            print("Waiting for service hostname to be available...")
+            service_hostname = self._wait_for_service_hostname(
+                service_name, max_wait_time=120
+            )
+            if service_hostname:
+                print(f"✓ Retrieved service hostname: {service_hostname}")
+                service.hostname = service_hostname
+            else:
+                print("❌ FAIL-FAST: Hostname not available. Cannot deploy clients.")
+                if service.job_id:
+                    self.cancel_job(service.job_id)
+                return clients
+
+        # Wait for service to be READY (not just running)
+        # This ensures model is loaded, API is responding, etc.
+        if service_type:
+            print(f"\nWaiting for {service_type} service to be ready...")
+            is_ready = self._wait_for_service_ready(
+                service_type=service_type,
+                hostname=service_hostname,
+                port=service.port,
+                max_wait_time=ready_check_timeout,
+                expected_model=expected_model,
+            )
+            if not is_ready:
+                print("❌ FAIL-FAST: Service not ready. Cancelling benchmark...")
+                if service.job_id:
+                    self.cancel_job(service.job_id)
+                return clients
+            print()  # Empty line after readiness check
 
         for i in range(num_clients):
             client_name = f"{client_name_prefix}-{i + 1}"
@@ -557,6 +683,19 @@ echo "Benchmark completed at $(date)"
             print("Error: Failed to upload script")
             return None
 
+        # Upload monitoring scraper script
+        try:
+            import sys
+            repo_root = Path(__file__).parent.parent.parent
+            local_scraper_path = repo_root / "src/monitoring/scraper.py"
+            
+            if local_scraper_path.exists():
+                remote_scraper_path = f"{self.abs_working_dir}/scripts/scraper.py"
+                print(f"Uploading scraper to: {remote_scraper_path}")
+                self.communicator.upload_file(local_scraper_path, remote_scraper_path)
+        except Exception as e:
+            print(f"Warning: Failed to upload scraper: {e}")
+
         # Submit job
         print("Submitting job...")
         job_id = self.communicator.submit_job(remote_script_path)
@@ -585,7 +724,9 @@ echo "Benchmark completed at $(date)"
         # Wait for job to start if requested
         if wait_for_start:
             print(f"Waiting for job to start (max {max_wait_time}s)...")
-            if self._wait_for_job_to_start(job_id, max_wait_time):
+            job_started, final_status = self._wait_for_job_to_start(job_id, max_wait_time)
+            
+            if job_started:
                 print("✓ Job is running")
 
                 # Update service with runtime information
@@ -601,11 +742,24 @@ echo "Benchmark completed at $(date)"
                 # Save updated state
                 service.save(self.benchmark_id, self.storage_manager)
             else:
-                print(f"Warning: Job did not start within {max_wait_time}s")
+                # Job did not start - FAIL-FAST: cancel the job to free resources
+                print(f"\n❌ FAIL-FAST: Cancelling service job {job_id}...")
+                self.cancel_job(job_id)
+                
+                if final_status == "PENDING":
+                    print(f"⚠️  TIMEOUT: Service job {job_id} still PENDING after {max_wait_time}s")
+                    print("   Note: Node allocation is waiting in the SLURM queue.")
+                elif final_status in ["COMPLETED", "FAILED", "CANCELLED"]:
+                    print(f"❌ Service job ended with status: {final_status}")
+                else:
+                    print(f"⚠️  Service job did not start within {max_wait_time}s (status: {final_status})")
+                
+                print("   Benchmark aborted. No resources wasted.")
+                return None
 
         return service
 
-    def _wait_for_job_to_start(self, job_id: str, max_wait_time: int) -> bool:
+    def _wait_for_job_to_start(self, job_id: str, max_wait_time: int) -> tuple:
         """
         Wait for a job to transition from PENDING to RUNNING.
 
@@ -614,23 +768,26 @@ echo "Benchmark completed at $(date)"
             max_wait_time: Maximum time to wait in seconds
 
         Returns:
-            True if job started, False if timeout
+            Tuple of (success: bool, final_status: str)
+            - success: True if job started running, False if timeout or failure
+            - final_status: Last known job status ("RUNNING", "PENDING", "FAILED", etc.)
         """
         start_time = time.time()
+        last_status = "UNKNOWN"
 
         while time.time() - start_time < max_wait_time:
             status = self.communicator.get_job_status(job_id)
+            last_status = status or "UNKNOWN"
 
             if status == "RUNNING":
-                return True
+                return (True, status)
             elif status in ["COMPLETED", "FAILED", "CANCELLED"]:
-                print(f"Job ended with status: {status}")
-                return False
+                return (False, status)
 
             # Wait a bit before checking again
             time.sleep(5)
 
-        return False
+        return (False, last_status)
 
     def _get_service_hostname(self, service_name: str) -> Optional[str]:
         """
@@ -729,7 +886,7 @@ echo "Benchmark completed at $(date)"
         return Client.load_all(self.benchmark_id, self.storage_manager)
 
     def _wait_for_service_hostname(
-        self, service_name: str, max_wait_time: int = 60
+        self, service_name: str, max_wait_time: int = 120
     ) -> Optional[str]:
         """
         Wait for service hostname to become available with exponential backoff.
@@ -768,6 +925,116 @@ echo "Benchmark completed at $(date)"
             print(f"  Waiting for hostname... ({elapsed}s elapsed)")
 
         return None
+
+    def _wait_for_service_ready(
+        self,
+        service_type: Optional[str],
+        hostname: str,
+        port: Optional[int],
+        max_wait_time: int = 300,
+        expected_model: Optional[str] = None,
+    ) -> bool:
+        """
+        Wait for service to be ready to accept requests.
+        
+        This method performs service-specific health checks to ensure the service
+        is not just running, but actually ready (model loaded, API responding).
+        
+        Args:
+            service_type: Type of service (ollama, vllm, redis, postgres, etc.)
+            hostname: Service hostname
+            port: Service port
+            max_wait_time: Maximum time to wait in seconds
+            expected_model: For LLM services, the model that should be loaded
+            
+        Returns:
+            True if service is ready, False if timeout
+        """
+        if not hostname:
+            return False
+            
+        start_time = time.time()
+        wait_interval = 2  # Start with 2 seconds
+        max_interval = 15  # Max 15 seconds between polls
+        
+        print(f"  Checking service readiness ({service_type or 'generic'})...")
+        
+        while time.time() - start_time < max_wait_time:
+            elapsed = int(time.time() - start_time)
+            is_ready = False
+            
+            try:
+                if service_type == "ollama":
+                    # Ollama: Check /api/tags for model availability
+                    check_url = f"http://{hostname}:11434/api/tags"
+                    result = self.communicator.execute_command(
+                        f"curl -s --max-time 5 {check_url}"
+                    )
+                    if result.success and result.stdout:
+                        # Check if expected model is in the response
+                        if expected_model:
+                            if expected_model in result.stdout:
+                                is_ready = True
+                                print(f"  ✓ Model '{expected_model}' is loaded")
+                        else:
+                            # Any successful response means service is ready
+                            if "models" in result.stdout:
+                                is_ready = True
+                                
+                elif service_type == "vllm":
+                    # vLLM: Check /health or /v1/models
+                    check_url = f"http://{hostname}:{port or 8000}/health"
+                    result = self.communicator.execute_command(
+                        f"curl -s --max-time 5 -o /dev/null -w '%{{http_code}}' {check_url}"
+                    )
+                    if result.success and result.stdout.strip() == "200":
+                        is_ready = True
+                    else:
+                        # Fallback to /v1/models
+                        check_url = f"http://{hostname}:{port or 8000}/v1/models"
+                        result = self.communicator.execute_command(
+                            f"curl -s --max-time 5 {check_url}"
+                        )
+                        if result.success and "data" in result.stdout:
+                            is_ready = True
+                            
+                elif service_type in ("redis", "postgres", "chroma"):
+                    # For databases: Simple TCP port check
+                    check_port = port or {"redis": 6379, "postgres": 5432, "chroma": 8000}.get(service_type, port)
+                    if check_port:
+                        result = self.communicator.execute_command(
+                            f"timeout 3 bash -c 'cat < /dev/null > /dev/tcp/{hostname}/{check_port}' 2>/dev/null && echo 'OK'"
+                        )
+                        if result.success and "OK" in result.stdout:
+                            is_ready = True
+                else:
+                    # Generic check: TCP port if available
+                    if port:
+                        result = self.communicator.execute_command(
+                            f"timeout 3 bash -c 'cat < /dev/null > /dev/tcp/{hostname}/{port}' 2>/dev/null && echo 'OK'"
+                        )
+                        if result.success and "OK" in result.stdout:
+                            is_ready = True
+                    else:
+                        # No port to check, assume ready after hostname available
+                        is_ready = True
+                        
+            except Exception as e:
+                print(f"  Health check error: {e}")
+                
+            if is_ready:
+                print(f"  ✓ Service is ready! ({elapsed}s)")
+                return True
+                
+            # Show progress
+            print(f"  Waiting for service to be ready... ({elapsed}s/{max_wait_time}s)")
+            
+            # Wait with exponential backoff
+            time.sleep(wait_interval)
+            wait_interval = min(wait_interval * 1.5, max_interval)
+            
+        print(f"  ❌ Service readiness timeout after {max_wait_time}s")
+        return False
 
     def stop_benchmark(self) -> dict:
         """
@@ -847,9 +1114,18 @@ echo "Benchmark completed at $(date)"
         # Get client statuses
         clients = self.load_all_clients()
         for client in clients:
-            job_status = None
             if client.job_id:
                 job_status = self.get_job_status(client.job_id)
+            
+            # Lazy-load hostname if running/completed but missing
+            if (job_status in ["RUNNING", "COMPLETED"] and not client.hostname and client.job_id):
+                hostname = self._get_service_hostname(client.name)
+                if hostname:
+                    client.hostname = hostname
+                    client.node_name = hostname
+                    # Persist the found hostname
+                    client.save(self.benchmark_id, self.storage_manager)
+
             status["clients"].append(
                 {
                     "name": client.name,

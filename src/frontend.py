@@ -41,10 +41,12 @@ from infra.storage import (
     get_benchmark_summary,
     list_all_benchmarks,
 )
-from reporting.artifacts import write_run_json, ensure_results_dir
+from reporting.artifacts import write_run_json, ensure_results_dir, read_run_json, read_summary_json
 from core.aggregator import aggregate_benchmark, compare_summaries
 from reporting.reporter import generate_benchmark_report
 from core.collector import collect_benchmark_artifacts, auto_collect_if_complete
+from core.lifecycle import get_benchmark_target, handle_benchmark_completion
+from monitoring.manager import MonitorManager
 
 
 @dataclass
@@ -69,6 +71,18 @@ class ServiceConfig:
     account: Optional[str] = None  # Slurm account (optional)
     port: Optional[int] = None  # Service port (for SERVICE_URL construction)
     env: Optional[Dict[str, str]] = None  # Environment variables for container
+    
+    # Advanced Hardware Config
+    gpus_per_node: Optional[int] = None  # Explicit GPUs per node
+    cpus_per_task: Optional[int] = None  # CPUs per task
+    memory: Optional[str] = None  # Explicit memory request (e.g. "64G")
+    constraints: Optional[str] = None  # Node features (e.g. "a100")
+    exclude_nodes: Optional[str] = None  # Nodes to exclude
+    
+    # Advanced Runtime Config
+    volumes: List[str] = field(default_factory=list)  # Bind mounts
+    modules: List[str] = field(default_factory=list)  # Modules to load
+    pre_run_commands: List[str] = field(default_factory=list)  # Setup commands
 
 
 @dataclass
@@ -164,6 +178,16 @@ class Recipe:
                 account=service_data.get("account"),
                 port=port,
                 env=env,
+                # Advanced Hardware
+                gpus_per_node=service_data.get("gpus_per_node"),
+                cpus_per_task=service_data.get("cpus_per_task"),
+                memory=service_data.get("memory"),
+                constraints=service_data.get("constraints"),
+                exclude_nodes=service_data.get("exclude_nodes"),
+                # Advanced Runtime
+                volumes=service_data.get("volumes", []),
+                modules=service_data.get("modules", []),
+                pre_run_commands=service_data.get("pre_run_commands", []),
             )
 
         # Parse client section
@@ -284,6 +308,19 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--list-recipes",
+        action="store_true",
+        help="List all available recipes",
+    )
+
+    parser.add_argument(
+        "--rerun",
+        type=str,
+        metavar="BENCHMARK_ID",
+        help="Rerun a benchmark using its original configuration",
+    )
+
+    parser.add_argument(
         "--list",
         "--list-benchmarks",
         dest="list_benchmarks",
@@ -341,6 +378,33 @@ def create_argument_parser() -> argparse.ArgumentParser:
         type=str,
         metavar="BENCHMARK_ID",
         help="Collect artifacts from cluster for a benchmark"
+    )
+    
+    parser.add_argument(
+        "--download-logs",
+        type=str,
+        metavar="BENCHMARK_ID",
+        help="Download all logs and artifacts for a benchmark to local machine"
+    )
+    
+    parser.add_argument(
+        "--sweep-report",
+        nargs="+",
+        metavar="BENCHMARK_ID",
+        help="Generate sweep report with saturation analysis from multiple benchmark IDs"
+    )
+    
+    parser.add_argument(
+        "--slo",
+        type=float,
+        metavar="SECONDS",
+        help="SLO threshold for P99 latency (used with --sweep-report)"
+    )
+
+    parser.add_argument(
+        "--monitor-stack",
+        choices=["start", "stop", "status"],
+        help="Control the monitoring stack (Prometheus + Grafana)"
     )
 
     parser.add_argument(
@@ -481,7 +545,10 @@ def ui_show_summary():
         
         # Also show metrics if available locally
         from reporting.artifacts import read_summary_json
-        metrics = read_summary_json(bid)
+        try:
+            metrics = read_summary_json(bid)
+        except Exception:
+            metrics = None
         if metrics:
             print(f"\nPerformance Metrics:")
             print(f"  Total Requests:    {metrics.get('total_requests', 0):,}")
@@ -517,12 +584,16 @@ def ui_watch_status():
         print(f"  Success Rate: {metrics.get('success_rate', 0):.2f}%")
         print(f"  Duration: {metrics.get('test_duration_s', 0):.1f}s")
         print(f"\nUse option 3 to view full summary.")
+        print(f"\nPrometheus Metrics: http://localhost:5000/api/benchmark/{bid}/metrics/prometheus")
         return
 
     print(f"\n👁 Watching benchmark {bid} (Ctrl+C to stop)...\n")
 
+    # Get target from run.json using lifecycle module
+    target = get_benchmark_target(bid)
+
     try:
-        with Manager(target="meluxina", benchmark_id=bid) as manager:
+        with Manager(target=target, benchmark_id=bid) as manager:
             while True:
                 status = manager.get_benchmark_status()
 
@@ -531,7 +602,7 @@ def ui_watch_status():
 
                 # Services
                 for svc in status["services"]:
-                    state = svc["status"]
+                    state = svc["status"].split(" ")[0]
                     icon = (
                         "✓"
                         if state == "COMPLETED"
@@ -551,16 +622,68 @@ def ui_watch_status():
                         f"Clients: {completed}/{total} done, {running} running, {pending} pending",
                         end="",
                     )
+                elif total == 0:
+                    # Check if clients were expected
+                    from reporting.artifacts import read_run_json
+                    run_data = read_run_json(bid)
+                    expected_clients = 0
+                    if run_data and "recipe" in run_data:
+                        benchmarks = run_data["recipe"].get("benchmarks", {})
+                        expected_clients = benchmarks.get("num_clients", 0) if isinstance(benchmarks, dict) else 0
+                    if expected_clients > 0:
+                        print(" ⚠ No clients deployed (expected {})".format(expected_clients), end="")
 
-                # Check if all done
-                all_terminal = all(
-                    s in ["COMPLETED", "FAILED", "CANCELLED"]
-                    for s in [svc["status"] for svc in status["services"]]
-                    + client_states
-                )
-
-                if all_terminal:
-                    print("\n\n✓ All jobs completed!")
+                # Check if all CLIENTS are done (this is what defines benchmark completion)
+                clients_terminal = all(
+                    c["status"] in ["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"]
+                    for c in status["clients"]
+                ) if status["clients"] else False  # False if no clients
+                total_clients = len(status["clients"])
+                
+                # When clients are done, stop service and collect
+                if clients_terminal and total_clients > 0:
+                    print("\n\n✓ All clients completed!")
+                    
+                    # Auto-stop the service (it's no longer needed)
+                    print("Stopping service...")
+                    try:
+                        manager.stop_benchmark()
+                        print("✓ Service stopped.")
+                    except Exception as e:
+                        print(f"⚠ {e}")
+                    
+                    # Collect artifacts (including logs and client hostnames)
+                    print("\nCollecting artifacts and logs...")
+                    try:
+                        from core.collector import collect_benchmark_artifacts
+                        if collect_benchmark_artifacts(bid, target):
+                            print("✓ Artifacts collected.")
+                            
+                            # Generate report
+                            print("Generating report...")
+                            try:
+                                from reporting.reporter import generate_benchmark_report
+                                generate_benchmark_report(bid)
+                                print("✓ Report generated.")
+                            except Exception as e:
+                                print(f"⚠ Report failed: {e}")
+                            
+                            # Show metrics summary
+                            from reporting.artifacts import read_summary_json
+                            metrics = read_summary_json(bid)
+                            if metrics:
+                                print(f"\nPerformance Summary:")
+                                print(f"  Throughput: {metrics.get('requests_per_second', 0):.2f} RPS")
+                                print(f"  P99 Latency: {metrics.get('latency_s', {}).get('p99', 0)*1000:.1f} ms")
+                        else:
+                            print("⚠ Collection failed")
+                    except Exception as e:
+                        print(f"⚠ Error: {e}")
+                    
+                    print(f"\n✓ Benchmark {bid} completed!")
+                    print(f"Artifacts: results/{bid}/")
+                    print(f"Logs: results/{bid}/logs/")
+                    print(f"\nPrometheus Metrics: http://localhost:5000/api/benchmark/{bid}/metrics/prometheus")
                     break
 
                 print("", flush=True)
@@ -592,8 +715,11 @@ def ui_stop_benchmark():
 
     print(f"\n⏹ Stopping benchmark {bid}...")
 
+    # Get target from run.json using lifecycle module
+    target = get_benchmark_target(bid)
+
     try:
-        with Manager(target="meluxina", benchmark_id=bid) as manager:
+        with Manager(target=target, benchmark_id=bid) as manager:
             result = manager.stop_benchmark()
 
             if result["services"]:
@@ -627,8 +753,11 @@ def ui_show_logs():
     if not log_dir.exists() or not list(log_dir.glob("*.out")):
         print(f"\n📋 No local logs found. Fetching from cluster...")
         
+        # Get target using lifecycle module
+        target = get_benchmark_target(bid)
+        
         try:
-            with Manager(target="meluxina", benchmark_id=bid) as manager:
+            with Manager(target=target, benchmark_id=bid) as manager:
                 logs = manager.tail_logs(num_lines=30)
 
                 # Save logs locally for future use
@@ -765,6 +894,15 @@ def run_benchmark_from_recipe(recipe_path: Path) -> Optional[int]:
                 "partition": service_config.partition,
                 "num_gpus": service_config.num_gpus,
                 "time_limit": service_config.time_limit,
+                # Advanced hardware/runtime
+                "gpus_per_node": service_config.gpus_per_node,
+                "cpus_per_task": service_config.cpus_per_task,
+                "memory": service_config.memory,
+                "constraints": service_config.constraints,
+                "exclude_nodes": service_config.exclude_nodes,
+                "volumes": service_config.volumes,
+                "modules": service_config.modules,
+                "pre_run_commands": service_config.pre_run_commands,
             }
 
             # Add account if specified
@@ -793,6 +931,28 @@ def run_benchmark_from_recipe(recipe_path: Path) -> Optional[int]:
             print(f"Service name: {service.name}")
             print(f"Job ID: {service.job_id}")
             print(f"{'=' * 60}\n")
+            
+            # MONITORING INTEGRATION: Register service with MonitorManager
+            try:
+                mon_mgr = MonitorManager()
+                # Determine which port/target to scrape
+                # The hardware scraper sidecar runs on 8010
+                if service.hostname:
+                    mon_mgr.update_prometheus_target(
+                        job_name=f"{service_name}_hw",
+                        ip_address=service.hostname,
+                        port=8010
+                    )
+                    
+                    # If this is vLLM, it also exposes metrics on its main port (8000) at /metrics
+                    if service_config.type == "vllm":
+                         mon_mgr.update_prometheus_target(
+                            job_name=f"{service_name}_vllm",
+                            ip_address=service.hostname,
+                            port=8000 # vLLM default
+                        )
+            except Exception as e:
+                print(f"Warning: Failed to register with monitoring stack: {e}")
 
             # Deploy clients if configured
             num_clients = recipe.benchmarks.num_clients
@@ -817,13 +977,20 @@ def run_benchmark_from_recipe(recipe_path: Path) -> Optional[int]:
                     # Use service account as fallback
                     client_sbatch_params["account"] = service_config.account
 
-                # Deploy multiple clients
+                # Deploy multiple clients (with service readiness check)
+                # Extract model name for LLM services from settings
+                expected_model = None
+                if service_config.settings:
+                    expected_model = service_config.settings.get("model")
+                
                 clients = manager.deploy_multiple_clients(
                     service_name=service_name,
                     benchmark_command=client_command,
                     num_clients=num_clients,
                     client_name_prefix=f"client-{service_name}",
                     service=service,
+                    service_type=service_config.type,  # For readiness check
+                    expected_model=expected_model,      # Model to wait for
                     **client_sbatch_params,
                 )
 
@@ -833,6 +1000,23 @@ def run_benchmark_from_recipe(recipe_path: Path) -> Optional[int]:
                 for client in clients:
                     print(f"  - {client.name} (Job ID: {client.job_id})")
                 print(f"{'=' * 60}\n")
+                
+                # Check if deployment failed (0 clients when we expected some)
+                if len(clients) == 0 and num_clients > 0:
+                    print(f"\n{'=' * 60}")
+                    print("❌ ERROR: Client deployment FAILED!")
+                    print(f"   Expected {num_clients} client(s), deployed 0")
+                    print("   Stopping service to avoid wasting resources...")
+                    print(f"{'=' * 60}\n")
+                    
+                    # Stop the service since no clients were deployed
+                    try:
+                        manager.stop_benchmark()
+                        print("✓ Service stopped.")
+                    except Exception as e:
+                        print(f"⚠ Warning: Could not stop service: {e}")
+                    
+                    return None  # Signal failure
             else:
                 print("\nNo clients configured for deployment.")
 
@@ -913,7 +1097,13 @@ def run_interactive_ui():
                         print("(Press Ctrl+C to stop watching and return to menu)\n")
                         
                         try:
-                            with Manager(target="meluxina", benchmark_id=str(benchmark_id)) as manager:
+                            # Get target using lifecycle module
+                            target = get_benchmark_target(str(benchmark_id))
+                            
+                            # Load run data for expected client count
+                            run_data = read_run_json(str(benchmark_id))
+
+                            with Manager(target=target, benchmark_id=str(benchmark_id)) as manager:
                                 while True:
                                     status = manager.get_benchmark_status()
                                     
@@ -932,50 +1122,66 @@ def run_interactive_ui():
                                     )
                                     total_clients = len(status["clients"])
                                     
-                                    print(
-                                        f"[{time.strftime('%H:%M:%S')}] Service: {svc_status}, "
-                                        f"Clients: {client_done}/{total_clients} done",
-                                        end="\r"
-                                    )
+                                    # Check if clients were expected
+                                    expected_clients = 0
+                                    if run_data and "recipe" in run_data:
+                                        benchmarks = run_data["recipe"].get("benchmarks", {})
+                                        expected_clients = benchmarks.get("num_clients", 0) if isinstance(benchmarks, dict) else 0
                                     
-                                    # Check if all done
-                                    all_done = all(
+                                    if total_clients > 0:
+                                        print(
+                                            f"[{time.strftime('%H:%M:%S')}] Service: {svc_status}, "
+                                            f"Clients: {client_done}/{total_clients} done",
+                                            end="\r"
+                                        )
+                                    elif expected_clients > 0:
+                                        print(
+                                            f"[{time.strftime('%H:%M:%S')}] Service: {svc_status}, "
+                                            f"⚠ No clients deployed (expected {expected_clients})",
+                                            end="\r"
+                                        )
+                                    else:
+                                        print(
+                                            f"[{time.strftime('%H:%M:%S')}] Service: {svc_status}",
+                                            end="\r"
+                                        )
+                                    
+                                    # Check if all CLIENTS are done - then stop service and collect
+                                    clients_done = all(
                                         c["status"] in ["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"]
                                         for c in status["clients"]
-                                    )
+                                    ) if status["clients"] else True
+                                    total_clients = len(status["clients"])
                                     
-                                    if all_done:
-                                        print(f"\n\n✓ All clients completed!")
+                                    if clients_done and total_clients > 0:
+                                        print(f"\n\n✓ All clients finished!")
                                         
-                                        # Auto-collect artifacts and generate report
-                                        print(f"\n{'=' * 60}")
-                                        print("Collecting artifacts from cluster...")
-                                        print(f"{'=' * 60}\n")
-                                        
+                                        # Auto-stop the service
+                                        print("Stopping service...")
                                         try:
-                                            from collector import collect_benchmark_artifacts
-                                            from reporter import generate_benchmark_report
-                                            
-                                            if collect_benchmark_artifacts(str(benchmark_id), "meluxina"):
-                                                print(f"✓ Artifacts collected successfully!\n")
-                                                
-                                                # Generate report
-                                                print(f"{'=' * 60}")
-                                                print("Generating benchmark report...")
-                                                print(f"{'=' * 60}\n")
-                                                
+                                            manager.stop_benchmark()
+                                            print("✓ Service stopped.")
+                                        except Exception as e:
+                                            print(f"⚠ {e}")
+                                        
+                                        # Auto-collect and report
+                                        print("\nCollecting artifacts...")
+                                        try:
+                                            if collect_benchmark_artifacts(str(benchmark_id), target):
+                                                print("✓ Artifacts collected.")
+                                                print("Generating report...")
                                                 try:
                                                     generate_benchmark_report(str(benchmark_id))
-                                                    print(f"✓ Report generated!\n")
+                                                    print("✓ Report generated.")
                                                 except Exception as e:
-                                                    print(f"⚠ Report generation failed: {e}\n")
+                                                    print(f"⚠ Report failed: {e}")
                                             else:
-                                                print(f"⚠ Artifact collection failed\n")
+                                                print("⚠ Collection failed")
                                         except Exception as e:
-                                            print(f"⚠ Error during collection: {e}\n")
+                                            print(f"⚠ Error: {e}")
                                         
                                         print(f"\nBenchmark {benchmark_id} finished.")
-                                        print("Use option 3 to view full summary.")
+                                        print(f"Artifacts: results/{benchmark_id}/")
                                         input("\nPress Enter to return to menu...")
                                         break
                                     
@@ -1066,7 +1272,8 @@ def cmd_stop_benchmark(benchmark_id: str):
     """Handle --stop command."""
     print(f"Stopping benchmark {benchmark_id}...")
     try:
-        with Manager(target="meluxina", benchmark_id=benchmark_id) as manager:
+        target = get_benchmark_target(benchmark_id)
+        with Manager(target=target, benchmark_id=benchmark_id) as manager:
             result = manager.stop_benchmark()
 
             cancelled = len(result["services"]) + len(result["clients"])
@@ -1098,7 +1305,8 @@ def cmd_show_logs(benchmark_id: str):
     if not log_dir.exists() or not list(log_dir.glob("*.out")):
         print(f"Fetching logs from cluster...")
         try:
-            with Manager(target="meluxina", benchmark_id=benchmark_id) as manager:
+            target = get_benchmark_target(benchmark_id)
+            with Manager(target=target, benchmark_id=benchmark_id) as manager:
                 logs = manager.tail_logs(num_lines=50)
 
                 # Save logs locally for future use
@@ -1201,8 +1409,11 @@ def cmd_watch_benchmark(benchmark_id: str):
 
     print(f"Watching benchmark {benchmark_id} (Ctrl+C to stop)...")
 
+    # Get target using lifecycle module
+    target = get_benchmark_target(benchmark_id)
+
     try:
-        with Manager(target="meluxina", benchmark_id=benchmark_id) as manager:
+        with Manager(target=target, benchmark_id=benchmark_id) as manager:
             while True:
                 status = manager.get_benchmark_status()
 
@@ -1212,12 +1423,44 @@ def cmd_watch_benchmark(benchmark_id: str):
                 for client in status["clients"]:
                     print(f"  Client {client['name']}: {client['status']}")
 
-                # Check if all done
-                all_states = [s["status"] for s in status["services"]] + [
-                    c["status"] for c in status["clients"]
-                ]
-                if all(s in ["COMPLETED", "FAILED", "CANCELLED"] for s in all_states):
-                    print("\n✓ All jobs finished!")
+                # Check if all done (services + clients)
+                svc_terminal = all(
+                    s["status"] in ["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"]
+                    for s in status["services"]
+                ) if status["services"] else True
+                clients_terminal = all(
+                    c["status"] in ["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"]
+                    for c in status["clients"]
+                ) if status["clients"] else True
+                
+                # Once clients are done, stop service and collect
+                if clients_terminal and len(status["clients"]) > 0:
+                    print("\n\n✓ All clients finished!")
+                    
+                    # Auto-stop the service
+                    print("Stopping service...")
+                    try:
+                        manager.stop_benchmark()
+                        print("✓ Service stopped.")
+                    except Exception as e:
+                        print(f"⚠ {e}")
+                    
+                    # Auto-collect artifacts
+                    print("\nCollecting artifacts...")
+                    if collect_benchmark_artifacts(benchmark_id, target):
+                        print("✓ Artifacts collected.")
+                        
+                        # Auto-generate report
+                        print("Generating report...")
+                        try:
+                            generate_benchmark_report(benchmark_id)
+                            print("✓ Report generated.")
+                            print(f"\nArtifacts: results/{benchmark_id}/")
+                            print(f"Report: reports/{benchmark_id}/report.md")
+                        except Exception as e:
+                            print(f"⚠ Report failed: {e}")
+                    else:
+                        print("⚠ Collection failed")
                     break
 
                 time.sleep(5)
@@ -1231,6 +1474,112 @@ def cmd_watch_benchmark(benchmark_id: str):
         return 1
 
 
+def cmd_sweep_report(benchmark_ids: list, slo_threshold: float = None):
+    """Handle --sweep-report command."""
+    from reporting.reporter import generate_sweep_report
+    
+    print(f"Generating sweep report for {len(benchmark_ids)} benchmarks...")
+    if slo_threshold:
+        print(f"  SLO threshold: {slo_threshold}s")
+    
+    try:
+        report_files = generate_sweep_report(benchmark_ids, slo_threshold)
+        
+        print(f"\n✓ Sweep report generated!")
+        print(f"  - Markdown: {report_files['markdown']}")
+        print(f"  - JSON: {report_files['json']}")
+        return 0
+        
+    except Exception as e:
+        print(f"Error generating sweep report: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_download_logs(benchmark_id: str):
+    """Handle --download-logs command."""
+    print(f"Downloading logs and artifacts for benchmark {benchmark_id}...")
+    
+    # Load benchmark to get target
+    summary = get_benchmark_summary(benchmark_id)
+    if not summary:
+        print(f"Benchmark {benchmark_id} not found", file=sys.stderr)
+        return 1
+    
+    # Get target using lifecycle module
+    target = get_benchmark_target(benchmark_id)
+    
+    # Create local logs directory
+    logs_dir = Path(f"logs/{benchmark_id}")
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Collect artifacts first (this downloads JSONL and metrics)
+    print("  Collecting artifacts from cluster...")
+    collect_benchmark_artifacts(benchmark_id, target)
+    
+    # Download additional log files
+    try:
+        with Manager(target=target, benchmark_id=benchmark_id) as manager:
+            # Get working directory on cluster
+            working_dir = f"/home/users/{manager.communicator.username}/benchmark_{benchmark_id}"
+            
+            # Download service and client logs
+            print("  Downloading Slurm logs...")
+            remote_logs = f"{working_dir}/logs/"
+            
+            # Use rsync/scp to download logs
+            import subprocess
+            result = subprocess.run(
+                ["rsync", "-avz", f"{target}:{remote_logs}", str(logs_dir) + "/"],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                print(f"✓ Logs downloaded to {logs_dir}/")
+            else:
+                # Fallback: try scp
+                result = subprocess.run(
+                    ["scp", "-r", f"{target}:{remote_logs}*", str(logs_dir) + "/"],
+                    capture_output=True,
+                    text=True
+                )
+                if result.returncode == 0:
+                    print(f"✓ Logs downloaded to {logs_dir}/")
+                else:
+                    print(f"  Warning: Could not download logs: {result.stderr}")
+    except Exception as e:
+        print(f"  Warning: Error downloading logs: {e}")
+    
+    # Show summary of downloaded files
+    results_dir = Path(f"results/{benchmark_id}")
+    reports_dir = Path(f"reports/{benchmark_id}")
+    
+    print(f"\n{'=' * 50}")
+    print(f"Downloaded artifacts for {benchmark_id}:")
+    print(f"{'=' * 50}")
+    
+    if results_dir.exists():
+        print(f"\nResults ({results_dir}):")
+        for f in results_dir.iterdir():
+            print(f"  - {f.name}")
+    
+    if reports_dir.exists():
+        print(f"\nReports ({reports_dir}):")
+        for f in reports_dir.iterdir():
+            if f.is_file():
+                print(f"  - {f.name}")
+            elif f.is_dir():
+                print(f"  - {f.name}/ ({len(list(f.iterdir()))} files)")
+    
+    if logs_dir.exists() and any(logs_dir.iterdir()):
+        print(f"\nLogs ({logs_dir}):")
+        for f in logs_dir.iterdir():
+            print(f"  - {f.name}")
+    
+    print(f"\n{'=' * 50}")
+    return 0
+
+
 def cmd_collect_artifacts(benchmark_id: str):
     """Handle --collect command."""
     print(f"Collecting artifacts for benchmark {benchmark_id}...")
@@ -1241,10 +1590,8 @@ def cmd_collect_artifacts(benchmark_id: str):
         print(f"Benchmark {benchmark_id} not found", file=sys.stderr)
         return 1
     
-    # Get target from run.json if available
-    from reporting.artifacts import read_run_json
-    run_data = read_run_json(benchmark_id)
-    target = run_data.get("target", "meluxina") if run_data else "meluxina"
+    # Get target using lifecycle module
+    target = get_benchmark_target(benchmark_id)
     
     # Collect artifacts
     success = collect_benchmark_artifacts(benchmark_id, target)
@@ -1257,85 +1604,6 @@ def cmd_collect_artifacts(benchmark_id: str):
     else:
         print(f"\n✗ Failed to collect artifacts", file=sys.stderr)
         return 1
-
-
-def cmd_compare_benchmarks(baseline_id: str, current_id: str):
-    """Handle --compare command."""
-    print(f"Comparing benchmarks: baseline={baseline_id}, current={current_id}\n")
-    
-    # Load summaries
-    from reporting.artifacts import read_run_json
-    
-    baseline_file = Path(f"results/{baseline_id}/summary.json")
-    current_file = Path(f"results/{current_id}/summary.json")
-    
-    # Generate summaries if they don't exist
-    if not baseline_file.exists():
-        print(f"Generating summary for baseline {baseline_id}...")
-        aggregate_benchmark(baseline_id)
-    
-    if not current_file.exists():
-        print(f"Generating summary for current {current_id}...")
-        aggregate_benchmark(current_id)
-    
-    # Load summaries
-    try:
-        with open(baseline_file) as f:
-            baseline = json.load(f)
-        with open(current_file) as f:
-            current = json.load(f)
-    except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    
-    # Compare
-    comparison = compare_summaries(baseline, current)
-    
-    # Print comparison
-    print(f"\n{'=' * 60}")
-    print(f"Comparison: {baseline_id} (baseline) vs {current_id} (current)")
-    print(f"{'=' * 60}\n")
-    
-    print(f"{'Metric':<25} {'Baseline':<12} {'Current':<12} {'Delta':<12} {'Change':<10} {'Status':<8}")
-    print("-" * 80)
-    
-    for metric_path, data in comparison["metrics"].items():
-        label = data["label"]
-        baseline_val = data["baseline"]
-        current_val = data["current"]
-        delta = data["delta"]
-        pct_change = data["percent_change"]
-        is_regression = data["regression"]
-        
-        # Format values
-        if "Rate" in label:
-            baseline_str = f"{baseline_val:.1f}%"
-            current_str = f"{current_val:.1f}%"
-            delta_str = f"{delta:+.1f}%"
-        elif "Latency" in label:
-            baseline_str = f"{baseline_val:.3f}s"
-            current_str = f"{current_val:.3f}s"
-            delta_str = f"{delta:+.3f}s"
-        else:
-            baseline_str = f"{baseline_val:.2f}"
-            current_str = f"{current_val:.2f}"
-            delta_str = f"{delta:+.2f}"
-        
-        pct_str = f"{pct_change:+.1f}%"
-        status = "REGRESS" if is_regression else "OK"
-        
-        print(f"{label:<25} {baseline_str:<12} {current_str:<12} {delta_str:<12} {pct_str:<10} {status:<8}")
-    
-    print("\n" + "=" * 60)
-    
-    # Overall verdict
-    has_regressions = any(data["regression"] for data in comparison["metrics"].values())
-    if has_regressions:
-        print("⚠ RESULT: REGRESSIONS DETECTED")
-        return 1
-    else:
-        print("✓ RESULT: NO SIGNIFICANT REGRESSIONS")
-        return 0
 
 
 def cmd_generate_report(benchmark_id: str):
@@ -1399,7 +1667,8 @@ def cmd_collect_metrics(benchmark_id: str):
     print(f"Collecting metrics for benchmark {benchmark_id}...")
 
     try:
-        with Manager(target="meluxina", benchmark_id=benchmark_id) as manager:
+        target = get_benchmark_target(benchmark_id)
+        with Manager(target=target, benchmark_id=benchmark_id) as manager:
             collector = MetricsCollector(manager.communicator)
 
             # Get job IDs from summary
@@ -1453,6 +1722,149 @@ def cmd_launch_web():
         return 1
 
 
+
+def cmd_list_recipes() -> int:
+    """Handle --list-recipes (via --list with no arg, or explicit flag if we added it)."""
+    # Note: Using existing get_available_recipes
+    recipes = get_available_recipes()
+    
+    if not recipes:
+        print("No recipes found in examples/ directory")
+        return 0
+        
+    print(f"\nFound {len(recipes)} recipes:")
+    print("-" * 50)
+    for i, recipe in enumerate(recipes, 1):
+        name = recipe.stem.replace("recipe_", "").replace("_", " ").title()
+        print(f"  {name:<25} ({recipe})")
+    print("-" * 50)
+    return 0
+
+
+def cmd_rerun_benchmark(benchmark_id: str) -> int:
+    """
+    Handle --rerun command.
+    
+    Re-executes a benchmark using the exact configuration from its run.json.
+    """
+    print(f"Preparing to rerun benchmark {benchmark_id}...")
+    
+    # 1. Load run.json to get the recipe
+    run_data = read_run_json(benchmark_id)
+    if not run_data:
+        print(f"Error: Could not find run data for {benchmark_id}", file=sys.stderr)
+        return 1
+        
+    if "recipe" not in run_data:
+        print(f"Error: run.json for {benchmark_id} does not contain recipe snapshot", file=sys.stderr)
+        return 1
+    
+    # 2. Extract recipe data
+    recipe_data = run_data["recipe"]
+    
+    # 3. Create a temporary recipe file to execute
+    # This ensures we use the exact same logic as a fresh run
+    import tempfile
+    
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
+        yaml.dump(recipe_data, tmp)
+        tmp_path = Path(tmp.name)
+        
+    print(f"  Restored configuration from {benchmark_id}")
+    print(f"  Created temporary recipe: {tmp_path}")
+    
+    try:
+        # 4. Run the benchmark
+        print(f"\n▶ Starting Rerun...")
+        new_id = run_benchmark_from_recipe(tmp_path)
+        
+        if new_id:
+            print(f"\n✓ Rerun successful: {benchmark_id} -> {new_id}")
+            # Optional: Link them in metadata? (Future improvement)
+            return 0
+        else:
+            print("\n❌ Rerun failed to start")
+            return 1
+            
+    finally:
+        # Cleanup
+        if tmp_path.exists():
+            os.unlink(tmp_path)
+
+
+def cmd_compare_benchmarks(id1: str, id2: str) -> int:
+    """
+    Handle --compare command.
+    
+    Compares two benchmark summaries and reports regressions.
+    """
+    print(f"Comparing {id1} (Baseline) vs {id2} (Current)...\n")
+    
+    # 1. Load summaries
+    s1 = read_summary_json(id1)
+    s2 = read_summary_json(id2)
+    
+    if not s1:
+        print(f"Error: Summary not found for {id1}", file=sys.stderr)
+        return 1
+    if not s2:
+        print(f"Error: Summary not found for {id2}", file=sys.stderr)
+        return 1
+        
+    # 2. Run comparison
+    try:
+        comparison = compare_summaries(s1, s2)
+    except Exception as e:
+        print(f"Error comparing summaries: {e}", file=sys.stderr)
+        return 1
+        
+    # 3. Pretty print results
+    print(f"{'Metric':<25} {'Baseline':<12} {'Current':<12} {'Delta':<12} {'% Change':<10} {'Status':<8}")
+    print("-" * 85)
+    
+    for metric_key, data in comparison["metrics"].items():
+        label = data["label"]
+        baseline_val = data["baseline"]
+        current_val = data["current"]
+        delta = data["delta"]
+        pct_change = data["percent_change"]
+        is_regression = data["regression"]
+        
+        # Format values
+        if "Rate" in label:
+            baseline_str = f"{baseline_val:.1f}%"
+            current_str = f"{current_val:.1f}%"
+            delta_str = f"{delta:+.1f}%"
+        elif "Latency" in label:
+            baseline_str = f"{baseline_val:.3f}s"
+            current_str = f"{current_val:.3f}s"
+            delta_str = f"{delta:+.3f}s"
+        else:
+            baseline_str = f"{baseline_val:.2f}"
+            current_str = f"{current_val:.2f}"
+            delta_str = f"{delta:+.2f}"
+        
+        pct_str = f"{pct_change:+.1f}%"
+        status = "REGRESS" if is_regression else "OK"
+        
+        # Highlight regressions in red if possible, or just bold/marked
+        row = f"{label:<25} {baseline_str:<12} {current_str:<12} {delta_str:<12} {pct_str:<10} {status:<8}"
+        if is_regression:
+            print(f"\033[91m{row}\033[0m")  # Red
+        else:
+            print(row)
+    
+    print("-" * 85)
+    
+    # Overall verdict
+    if comparison["verdict"] == "FAIL":
+        print("\n\033[91m⚠ RESULT: FAIL - REGRESSIONS DETECTED\033[0m")
+        return 1
+    else:
+        print("\n\033[92m✓ RESULT: PASS - NO SIGNIFICANT REGRESSIONS\033[0m")
+        return 0
+
+
 def main() -> int:
     """
     Main entry point for the frontend.
@@ -1470,6 +1882,57 @@ def main() -> int:
         if args.ui:
             run_interactive_ui()
             return 0
+
+        # --monitor-stack: Control monitoring stack
+        if args.monitor_stack:
+            manager = MonitorManager()
+            if args.monitor_stack == "start":
+                print("Starting monitoring stack...")
+                
+                # Verify environment / Setup
+                if not manager.setup_stack():
+                    print("❌ Stack setup failed. Aborting start.")
+                    return 1
+                    
+                if manager.start_stack():
+                    print(f"✓ Stack start command issued.")
+                    print("  Run 'python src/frontend.py --monitor-stack status' to check IP.")
+                else:
+                    print("❌ Stack start failed.")
+                     
+            elif args.monitor_stack == "stop":
+                print("Stopping monitoring stack...")
+                manager.stop_stack()
+                    
+            elif args.monitor_stack == "status":
+                job_id, ip, ready = manager.check_status()
+                if job_id:
+                    print(f"Stack Status: RUNNING (Job {job_id})")
+                    if ip:
+                         print(f"  Head IP:    {ip}")
+                         print(f"  Prometheus: http://localhost:9090")
+                         print(f"  Grafana:    http://localhost:3000")
+                         print(f"\\nSSH Tunnels required:")
+                         ssh_user = os.environ.get('MELUXINA_USER', os.environ.get('USER', 'YOUR_USERNAME'))
+                         print(f"  ssh -p 8822 {ssh_user}@login.lxp.lu -NL 9090:{ip}:9090")
+                         print(f"  ssh -p 8822 {ssh_user}@login.lxp.lu -NL 3000:{ip}:3000")
+                         if ssh_user == os.environ.get('USER'):
+                             print(f"\\n  (Set MELUXINA_USER env var if '{ssh_user}' is not your MeluXina username)")
+                    else:
+                        print("  Waiting for IP address allocation...")
+                else:
+                    print("Stack Status: STOPPED")
+            return 0
+
+        # --list-recipes: List available recipes
+        if args.list_recipes:
+            return cmd_list_recipes()
+
+        # --rerun: Rerun a benchmark
+        if args.rerun:
+            return cmd_rerun_benchmark(args.rerun)
+
+
 
         # --list-benchmarks: List all benchmarks
         if args.list_benchmarks:
@@ -1510,6 +1973,14 @@ def main() -> int:
         # --collect: Collect artifacts from cluster
         if args.collect:
             return cmd_collect_artifacts(args.collect)
+        
+        # --download-logs: Download all logs and artifacts
+        if args.download_logs:
+            return cmd_download_logs(args.download_logs)
+        
+        # --sweep-report: Generate sweep report with saturation analysis
+        if args.sweep_report:
+            return cmd_sweep_report(args.sweep_report, args.slo)
 
         # --id: Load existing benchmark by ID
         if args.benchmark_id:
@@ -1517,18 +1988,79 @@ def main() -> int:
 
         # Recipe file provided: Run benchmark
         if args.recipe:
-            result = run_benchmark_from_recipe(args.recipe)
-            if result:
+            benchmark_id = run_benchmark_from_recipe(args.recipe)
+            if benchmark_id:
+                # Get target using lifecycle module
+                target = get_benchmark_target(benchmark_id)
+                
+                # Wait for benchmark completion and auto-collect artifacts
+                print(f"\n{'=' * 60}")
+                print("Waiting for benchmark to complete...")
+                print(f"{'=' * 60}")
+                print("(Press Ctrl+C to detach - benchmark will continue running)\n")
+                
+                try:
+                    with Manager(target=target, benchmark_id=benchmark_id) as manager:
+                        while True:
+                            status = manager.get_benchmark_status()
+                            
+                            # Get client progress
+                            client_done = sum(1 for c in status["clients"] if c["status"] in ["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"])
+                            total_clients = len(status["clients"])
+                            svc_status = status["services"][0]["status"] if status["services"] else "UNKNOWN"
+                            
+                            print(f"\r[{time.strftime('%H:%M:%S')}] Service: {svc_status}, Clients: {client_done}/{total_clients} done", end="", flush=True)
+                            
+                            # Check if all CLIENTS are done (terminal state)
+                            clients_done_all = all(
+                                c["status"] in ["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"]
+                                for c in status["clients"]
+                            ) if status["clients"] else True
+                            
+                            if clients_done_all and total_clients > 0:
+                                print(f"\n\n✓ All clients finished!")
+                                
+                                # Auto-stop the service (it's no longer needed)
+                                print(f"Stopping service...")
+                                try:
+                                    manager.stop_benchmark()
+                                    print(f"✓ Service stopped.")
+                                except Exception as e:
+                                    print(f"⚠ Warning: {e}")
+                                
+                                # Auto-collect artifacts
+                                print(f"\nCollecting artifacts...")
+                                if collect_benchmark_artifacts(str(benchmark_id), target):
+                                    print(f"✓ Artifacts collected.")
+                                    
+                                    # Auto-generate report
+                                    print(f"Generating report...")
+                                    try:
+                                        generate_benchmark_report(str(benchmark_id))
+                                        print(f"✓ Report generated.")
+                                    except Exception as e:
+                                        print(f"⚠ Report failed: {e}")
+                                else:
+                                    print(f"⚠ Collection failed")
+                                
+                                break
+                            
+                            time.sleep(5)
+                            
+                except KeyboardInterrupt:
+                    print(f"\n\nDetached from benchmark {benchmark_id}.")
+                    print("Benchmark is running in the background.")
+                    print(f"Use: python frontend.py --watch {benchmark_id}")
+                    return 0
+                
                 # Final summary
                 print(f"\n{'=' * 60}")
-                print("Benchmark Deployment Summary")
+                print("Benchmark Complete!")
                 print(f"{'=' * 60}")
-                print(f"Benchmark ID: {result}")
-                print(f"\nUseful commands:")
-                print(f"  python frontend.py --summary {result}   # Show summary")
-                print(f"  python frontend.py --watch {result}     # Watch status")
-                print(f"  python frontend.py --logs {result}      # Show logs")
-                print(f"  python frontend.py --stop {result}      # Stop benchmark")
+                print(f"Benchmark ID: {benchmark_id}")
+                print(f"\nArtifacts available in: results/{benchmark_id}/")
+                print(f"Report available in: reports/{benchmark_id}/report.md")
+                print(f"\nPrometheus Metrics: http://localhost:5000/api/benchmark/{benchmark_id}/metrics/prometheus")
                 print(f"{'=' * 60}\n")
                 return 0
             else:

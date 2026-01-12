@@ -9,7 +9,7 @@ This module creates PNG plots for benchmark reports including:
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -319,6 +319,360 @@ def plot_service_metrics(summary: Dict[str, Any], output_path: Path) -> None:
         # Unknown service type, skip
         return
 
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+
+# =============================================================================
+# Comparative Analysis Plots (inspired by Team10's approach)
+# =============================================================================
+
+
+def plot_throughput_scaling(
+    x_values: List[float],
+    y_values: List[float],
+    x_label: str,
+    title: str,
+    output_path: Path,
+    series_labels: Optional[List[str]] = None,
+    log_x: bool = False,
+    log_y: bool = False,
+) -> None:
+    """
+    Create a scaling plot showing how throughput changes with a parameter.
+    
+    Useful for: Throughput vs Clients, Throughput vs Payload Size, etc.
+    
+    Args:
+        x_values: X-axis values (e.g., number of clients)
+        y_values: Y-axis values (e.g., throughput in RPS)
+        x_label: Label for X-axis
+        title: Plot title
+        output_path: Path to save the plot
+        series_labels: Optional labels for each data point
+        log_x: Use logarithmic X-axis
+        log_y: Use logarithmic Y-axis
+    """
+    setup_plot_style()
+    
+    if not x_values or not y_values:
+        return
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Sort by x value for proper line plotting
+    sorted_data = sorted(zip(x_values, y_values))
+    x_sorted, y_sorted = zip(*sorted_data) if sorted_data else ([], [])
+    
+    ax.plot(x_sorted, y_sorted, marker='o', linewidth=2, markersize=8, color='#3498db')
+    ax.fill_between(x_sorted, 0, y_sorted, alpha=0.2, color='#3498db')
+    
+    ax.set_xlabel(x_label, fontsize=12)
+    ax.set_ylabel("Throughput (requests/sec)", fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    
+    if log_x:
+        ax.set_xscale('log')
+    if log_y:
+        ax.set_yscale('log')
+    
+    ax.set_ylim(bottom=0)
+    
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+
+def plot_latency_heatmap(
+    data: Dict[str, Dict[str, float]],
+    output_path: Path,
+    title: str = "Latency Heatmap",
+) -> None:
+    """
+    Create a heatmap showing latency percentiles across benchmarks/operations.
+    
+    Args:
+        data: Dict mapping row labels to {column: value} dicts
+              e.g., {"SET": {"p50": 1.2, "p95": 2.5, ...}, "GET": {...}}
+        output_path: Path to save the plot
+        title: Plot title
+    """
+    setup_plot_style()
+    
+    if not data:
+        return
+    
+    # Extract labels and values
+    row_labels = list(data.keys())
+    col_labels = list(next(iter(data.values())).keys()) if data else []
+    
+    # Create matrix
+    matrix = []
+    for row in row_labels:
+        row_data = [data[row].get(col, 0) for col in col_labels]
+        matrix.append(row_data)
+    
+    matrix = np.array(matrix)
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Create heatmap
+    im = ax.imshow(matrix, cmap='RdYlGn_r', aspect='auto')
+    
+    # Add colorbar
+    cbar = ax.figure.colorbar(im, ax=ax)
+    cbar.ax.set_ylabel("Latency (ms)", rotation=-90, va="bottom")
+    
+    # Set ticks
+    ax.set_xticks(np.arange(len(col_labels)))
+    ax.set_yticks(np.arange(len(row_labels)))
+    ax.set_xticklabels([c.upper() for c in col_labels])
+    ax.set_yticklabels(row_labels)
+    
+    # Rotate x labels
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    
+    # Add text annotations
+    for i in range(len(row_labels)):
+        for j in range(len(col_labels)):
+            value = matrix[i, j]
+            text_color = "white" if value > matrix.max() * 0.5 else "black"
+            ax.text(j, i, f"{value:.2f}", ha="center", va="center", color=text_color, fontsize=9)
+    
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+
+def plot_throughput_heatmap(
+    data: Dict[str, Dict[str, float]],
+    output_path: Path,
+    title: str = "Throughput Heatmap",
+    value_format: str = ".0f",
+    cmap: str = "YlGnBu",
+) -> None:
+    """
+    Create a heatmap showing throughput across two parameters (Team10-style).
+    
+    Args:
+        data: Dict mapping row labels to {column_label: throughput_value} dicts
+              e.g., {"256B": {"1 client": 1000, "10 clients": 5000}, ...}
+        output_path: Path to save the plot
+        title: Plot title
+        value_format: Format string for value annotations (e.g., ".0f", ".1f")
+        cmap: Colormap name
+    """
+    setup_plot_style()
+    
+    if not data:
+        return
+    
+    # Extract labels and values
+    row_labels = list(data.keys())
+    col_labels = list(next(iter(data.values())).keys()) if data else []
+    
+    # Create matrix
+    matrix = []
+    for row in row_labels:
+        row_data = [data[row].get(col, 0) for col in col_labels]
+        matrix.append(row_data)
+    
+    matrix = np.array(matrix)
+    
+    fig, ax = plt.subplots(figsize=(max(8, len(col_labels)), max(6, len(row_labels) * 0.5)))
+    
+    # Create heatmap
+    im = ax.imshow(matrix, cmap=cmap, aspect='auto')
+    
+    # Add colorbar
+    cbar = ax.figure.colorbar(im, ax=ax)
+    cbar.ax.set_ylabel("Throughput (req/s)", rotation=-90, va="bottom")
+    
+    # Set ticks
+    ax.set_xticks(np.arange(len(col_labels)))
+    ax.set_yticks(np.arange(len(row_labels)))
+    ax.set_xticklabels(col_labels)
+    ax.set_yticklabels(row_labels)
+    
+    # Rotate x labels
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    
+    # Add text annotations
+    for i in range(len(row_labels)):
+        for j in range(len(col_labels)):
+            value = matrix[i, j]
+            # Use white text on dark cells, black on light cells
+            text_color = "white" if value > matrix.max() * 0.5 else "black"
+            ax.text(j, i, f"{value:{value_format}}", ha="center", va="center", 
+                   color=text_color, fontsize=9, fontweight='bold')
+    
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+
+def plot_throughput_comparison(
+    labels: List[str],
+    values: List[float],
+    output_path: Path,
+    title: str = "Throughput Comparison",
+    color_by_value: bool = True,
+) -> None:
+    """
+    Create a horizontal bar chart comparing throughput across benchmarks/operations.
+    
+    Args:
+        labels: Bar labels (operation names, benchmark IDs, etc.)
+        values: Throughput values
+        output_path: Path to save the plot
+        title: Plot title
+        color_by_value: If True, color bars by relative value
+    """
+    setup_plot_style()
+    
+    if not labels or not values:
+        return
+    
+    # Sort by value descending
+    sorted_data = sorted(zip(labels, values), key=lambda x: x[1], reverse=True)
+    sorted_labels, sorted_values = zip(*sorted_data) if sorted_data else ([], [])
+    
+    fig, ax = plt.subplots(figsize=(10, max(4, len(labels) * 0.5)))
+    
+    # Generate colors
+    if color_by_value:
+        colors = plt.cm.viridis(np.linspace(0.2, 0.8, len(sorted_values)))
+    else:
+        colors = ['#3498db'] * len(sorted_values)
+    
+    bars = ax.barh(sorted_labels, sorted_values, color=colors)
+    
+    # Add value labels
+    for bar, value in zip(bars, sorted_values):
+        width = bar.get_width()
+        label_x = width + max(sorted_values) * 0.01
+        ax.text(label_x, bar.get_y() + bar.get_height()/2,
+                f'{value:.1f}', va='center', fontsize=9)
+    
+    ax.set_xlabel("Throughput (requests/sec)", fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.grid(True, axis='x', alpha=0.3)
+    ax.set_xlim(right=max(sorted_values) * 1.15)
+    
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+
+def plot_latency_breakdown_comparison(
+    data: Dict[str, Dict[str, float]],
+    output_path: Path,
+    title: str = "Latency Breakdown",
+) -> None:
+    """
+    Create a stacked bar chart showing avg vs tail latency.
+    
+    Args:
+        data: Dict mapping labels to {"avg": x, "tail": y} (tail = p99 - avg)
+        output_path: Path to save the plot
+        title: Plot title
+    """
+    setup_plot_style()
+    
+    if not data:
+        return
+    
+    labels = list(data.keys())
+    avg_values = [data[l].get("avg", 0) for l in labels]
+    tail_values = [data[l].get("tail", 0) for l in labels]
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    x = np.arange(len(labels))
+    width = 0.6
+    
+    bars1 = ax.bar(x, avg_values, width, label='Average Latency', color='#3498db')
+    bars2 = ax.bar(x, tail_values, width, bottom=avg_values, label='Tail Latency (P99 - Avg)', color='#e74c3c')
+    
+    # Add total labels
+    for i, (avg, tail) in enumerate(zip(avg_values, tail_values)):
+        total = avg + tail
+        ax.text(i, total + 0.01 * max(v1 + v2 for v1, v2 in zip(avg_values, tail_values)),
+                f'{total:.2f}ms', ha='center', va='bottom', fontsize=9)
+    
+    ax.set_ylabel("Latency (ms)", fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=45, ha='right')
+    ax.legend()
+    ax.grid(True, axis='y', alpha=0.3)
+    ax.set_ylim(bottom=0)
+    
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+
+def plot_multi_series_scaling(
+    series_data: Dict[str, Tuple[List[float], List[float]]],
+    x_label: str,
+    y_label: str,
+    title: str,
+    output_path: Path,
+    log_x: bool = False,
+    log_y: bool = False,
+) -> None:
+    """
+    Create a multi-series line plot for comparing scaling across configurations.
+    
+    Args:
+        series_data: Dict mapping series name to (x_values, y_values) tuples
+        x_label: Label for X-axis
+        y_label: Label for Y-axis
+        title: Plot title
+        output_path: Path to save the plot
+        log_x: Use logarithmic X-axis
+        log_y: Use logarithmic Y-axis
+    """
+    setup_plot_style()
+    
+    if not series_data:
+        return
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    colors = plt.cm.tab10(np.linspace(0, 1, len(series_data)))
+    markers = ['o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h']
+    
+    for i, (name, (x_vals, y_vals)) in enumerate(series_data.items()):
+        if not x_vals or not y_vals:
+            continue
+        
+        # Sort by x value
+        sorted_data = sorted(zip(x_vals, y_vals))
+        x_sorted, y_sorted = zip(*sorted_data) if sorted_data else ([], [])
+        
+        marker = markers[i % len(markers)]
+        ax.plot(x_sorted, y_sorted, marker=marker, linewidth=2, markersize=8,
+                color=colors[i], label=name)
+    
+    ax.set_xlabel(x_label, fontsize=12)
+    ax.set_ylabel(y_label, fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='best')
+    
+    if log_x:
+        ax.set_xscale('log')
+    if log_y:
+        ax.set_yscale('log')
+    
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()

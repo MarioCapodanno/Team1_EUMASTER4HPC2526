@@ -1,0 +1,28 @@
+configuration:
+  target: meluxina
+service:
+  type: vllm
+  name: vllm-opt125m-4c
+  image: vllm/vllm-openai:latest
+  partition: gpu
+  time_limit: 00:30:00
+  account: p200981
+  port: 8000
+  settings:
+    model: facebook/opt-125m
+    tensor_parallel_size: 1
+  memory: 64G
+client:
+  type: vllm_smoke
+  partition: cpu
+  time_limit: 00:15:00
+  account: p200981
+  settings:
+    model: facebook/opt-125m
+    prompt: Hello AI
+    max_tokens: 50
+benchmarks:
+  num_clients: 4
+  metrics:
+  - latency
+  - throughput

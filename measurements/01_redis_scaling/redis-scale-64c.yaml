@@ -1,0 +1,20 @@
+configuration:
+  target: test_target
+service:
+  type: redis
+  name: redis-scale-64c
+  image: redis:alpine
+  partition: cpu
+  time_limit: 00:20:00
+  account: test_account
+  port: 6379
+client:
+  type: redis_stress
+  partition: cpu
+  time_limit: 00:10:00
+  account: test_account
+benchmarks:
+  num_clients: 64
+  metrics:
+  - throughput
+  - latency

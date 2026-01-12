@@ -1,0 +1,25 @@
+configuration:
+  target: meluxina
+service:
+  type: postgres
+  name: postgres-pgbench-1c
+  image: postgres:15-alpine
+  partition: cpu
+  time_limit: 00:20:00
+  account: p200981
+  port: 5432
+  settings:
+    POSTGRES_PASSWORD: benchmarkpass
+client:
+  type: pgbench
+  partition: cpu
+  time_limit: 00:10:00
+  account: p200981
+  settings:
+    transactions: 200
+    threads: 1
+benchmarks:
+  num_clients: 1
+  metrics:
+  - tps
+  - latency

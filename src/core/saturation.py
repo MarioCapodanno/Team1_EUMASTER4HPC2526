@@ -389,7 +389,7 @@ def load_sweep_results(benchmark_ids: List[str]) -> List[Dict[str, Any]]:
         benchmark_ids: List of benchmark IDs to load
 
     Returns:
-        List of summary dictionaries
+        List of summary dictionaries with concurrency info
     """
     results = []
 
@@ -399,6 +399,27 @@ def load_sweep_results(benchmark_ids: List[str]) -> List[Dict[str, Any]]:
             with open(summary_path) as f:
                 summary = json.load(f)
                 summary["benchmark_id"] = bid
+                
+                # Try to get concurrency from run.json if not in summary
+                if "concurrency" not in summary and "num_clients" not in summary:
+                    run_path = Path(f"results/{bid}/run.json")
+                    if run_path.exists():
+                        try:
+                            with open(run_path) as rf:
+                                run_data = json.load(rf)
+                                # Get num_clients from run.json
+                                clients = run_data.get("clients", [])
+                                if clients:
+                                    summary["num_clients"] = len(clients)
+                                    summary["concurrency"] = len(clients)
+                                # Also try to get from recipe
+                                recipe = run_data.get("recipe", {})
+                                if "num_clients" in recipe:
+                                    summary["num_clients"] = recipe["num_clients"]
+                                    summary["concurrency"] = recipe["num_clients"]
+                        except (json.JSONDecodeError, IOError):
+                            pass
+                
                 results.append(summary)
 
     return results

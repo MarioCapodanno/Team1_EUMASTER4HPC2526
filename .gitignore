@@ -33,6 +33,10 @@ logs/*
 .benchmark_storage/
 src/.benchmark_storage/
 
+# Runtime state files
+.benchmark_id_counter_*
+.monitoring/
+
 # Config files with secrets (keep templates)
 config/prometheus.local.yml
 config/grafana/provisioning/datasources/*.local.yaml
@@ -45,3 +49,8 @@ config/grafana/provisioning/datasources/*.local.yaml
 
 # Don't ignore JSON in specific directories (for dashboards)
 !config/grafana/dashboards/*.json
+
+# Local analysis outputs (not for repo)
+analysis/
+utils/
+batch_scripts/

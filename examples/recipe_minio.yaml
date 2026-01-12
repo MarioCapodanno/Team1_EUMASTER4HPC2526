@@ -5,8 +5,10 @@ service:
   name: "minio-storage"
   type: "minio"
   partition: "cpu"
+  num_gpus: 0
   nodes: 1
   time_limit: "00:30:00"
+  account: "p200981"
   settings:
     data_dir: "/data"
     console_port: 9001
@@ -18,6 +20,7 @@ client:
   name: "minio-benchmark"
   type: "minio_stress"
   partition: "cpu"
+  num_gpus: 0
   nodes: 1
   time_limit: "00:25:00"
   settings:

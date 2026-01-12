@@ -21,6 +21,37 @@ except ImportError:
     HAS_PLOTTING = False
     generate_plots = None
 
+# KF2 Bottleneck Attribution
+try:
+    from core.bottleneck import classify_bottleneck, format_bottleneck_report
+
+    HAS_BOTTLENECK = True
+except ImportError:
+    HAS_BOTTLENECK = False
+    classify_bottleneck = None
+    format_bottleneck_report = None
+
+# KF1 Saturation Finder
+try:
+    from core.saturation import analyze_saturation, format_saturation_report, load_sweep_results
+
+    HAS_SATURATION = True
+except ImportError:
+    HAS_SATURATION = False
+    analyze_saturation = None
+    format_saturation_report = None
+    analyze_saturation = None
+    format_saturation_report = None
+    load_sweep_results = None
+
+# Prometheus Metrics
+try:
+    from monitoring.monitor import format_prometheus_metrics
+    HAS_PROMETHEUS = True
+except ImportError:
+    HAS_PROMETHEUS = False
+    format_prometheus_metrics = None
+
 
 def generate_findings(summary: Dict[str, Any]) -> List[Dict[str, str]]:
     """
@@ -364,7 +395,7 @@ def generate_markdown_report(
     run_data: Optional[Dict[str, Any]] = None,
 ) -> str:
     """
-    Generate a Markdown report for a benchmark.
+    Generate a professional academic-style Markdown report for a benchmark.
 
     Args:
         benchmark_id: Unique benchmark identifier
@@ -381,153 +412,169 @@ def generate_markdown_report(
     # Get service info
     service_info = run_data.get("service", {})
     service_type = service_info.get("type", "unknown")
+    service_name = service_info.get("name", "Unknown Service")
 
+    # Extract key metrics
+    total_requests = summary.get("total_requests", 0)
+    success_rate = summary.get("success_rate", 0)
+    latency = summary.get("latency_s", {})
+    p50 = latency.get("p50", 0)
+    p95 = latency.get("p95", 0)
+    p99 = latency.get("p99", 0)
+    avg_latency = latency.get("avg", 0)
+    throughput = summary.get("requests_per_second", 0)
+    
     # Generate findings and recommendations
     findings = generate_findings(summary)
     recommendations = generate_recommendations(summary)
 
-    # Build report - start with KF5 One Page Summary
-    one_page = generate_one_page_summary(benchmark_id, summary, run_data)
-
+    # Build report
     lines = [
-        one_page,
+        f"# Performance Report: {service_name}",
         "",
-        f"# Benchmark Report: {benchmark_id}",
-        "",
-        f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC",
+        f"**Benchmark ID:** `{benchmark_id}`  ",
+        f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M')} UTC  ",
         f"**Service Type:** {service_type.title()}",
-        f"**Service:** {service_info.get('name', 'unknown')}",
         "",
-        "## Detailed Analysis",
+        "---",
         "",
-        f"This benchmark evaluated the performance of a {service_type} service.",
-        f"The test executed {summary.get('total_requests', 0)} total requests with a "
-        f"success rate of {summary.get('success_rate', 0):.1f}%.",
+        "## Executive Summary",
+        "",
+        f"This report presents the performance analysis of **{service_name}** under benchmark conditions. ",
+        f"A total of **{total_requests:,}** requests were processed with a success rate of **{success_rate:.1f}%**.",
         "",
     ]
-
-    # Key metrics table
-    lines.extend(
-        [
-            "### Key Performance Metrics",
-            "",
-            "| Metric | Value |",
-            "|--------|-------|",
-            f"| Total Requests | {summary.get('total_requests', 0)} |",
-            f"| Success Rate | {summary.get('success_rate', 0):.1f}% |",
-            f"| Average Latency | {summary.get('latency_s', {}).get('avg', 0):.3f}s |",
-            f"| P95 Latency | {summary.get('latency_s', {}).get('p95', 0):.3f}s |",
-            f"| P99 Latency | {summary.get('latency_s', {}).get('p99', 0):.3f}s |",
-            f"| Throughput | {summary.get('requests_per_second', 0):.2f} RPS |",
-            "",
-        ]
-    )
+    
+    # Verdict
+    if success_rate >= 99 and p99 < 2.0:
+        verdict = "PASS - Ready for production"
+        verdict_color = "green"
+    elif success_rate >= 95:
+        verdict = "ACCEPTABLE - Minor issues detected"
+        verdict_color = "yellow"
+    else:
+        verdict = "FAIL - Requires optimization"
+        verdict_color = "red"
+    
+    lines.extend([
+        f"**Verdict:** {verdict}",
+        "",
+        "---",
+        "",
+        "## Performance Metrics",
+        "",
+        "### Latency Distribution",
+        "",
+        "| Percentile | Latency (ms) |",
+        "|------------|-------------|",
+        f"| P50 (Median) | {p50 * 1000:.1f} |",
+        f"| P95 | {p95 * 1000:.1f} |",
+        f"| P99 | {p99 * 1000:.1f} |",
+        f"| Average | {avg_latency * 1000:.1f} |",
+        "",
+        "### Throughput",
+        "",
+        f"| Metric | Value |",
+        "|--------|-------|",
+        f"| Requests per Second | {throughput:.2f} |",
+        f"| Total Requests | {total_requests:,} |",
+        f"| Success Rate | {success_rate:.1f}% |",
+        "",
+    ])
 
     # Service-specific metrics
     if service_type in ["vllm", "ollama"]:
         tps = summary.get("tokens_per_second", 0)
         if tps > 0:
-            lines.extend(
-                [
-                    "### LLM-Specific Metrics",
-                    "",
-                    f"- Tokens per Second: {tps:.2f}",
-                    f"- Average Output Tokens: {summary.get('avg_output_tokens', 0):.1f}",
-                    f"- Average Input Tokens: {summary.get('avg_input_tokens', 0):.1f}",
-                    "",
-                ]
-            )
+            lines.extend([
+                "### LLM Performance",
+                "",
+                "| Metric | Value |",
+                "|--------|-------|",
+                f"| Tokens per Second | {tps:.2f} |",
+                f"| Avg Output Tokens | {summary.get('avg_output_tokens', 0):.1f} |",
+                f"| Avg Input Tokens | {summary.get('avg_input_tokens', 0):.1f} |",
+                "",
+            ])
 
-    elif service_type == "postgres":
-        operations = summary.get("operations", {})
-        if operations:
-            lines.extend(
-                [
-                    "### Database Operations",
-                    "",
-                    "| Operation | Count | Avg Latency | P95 Latency |",
-                    "|-----------|--------|-------------|------------|",
-                ]
-            )
-            for op_name, op_data in operations.items():
-                count = op_data.get("count", 0)
-                avg_lat = op_data.get("avg_latency", 0)
-                p95_lat = op_data.get("p95_latency", 0)
-                lines.append(
-                    f"| {op_name} | {count} | {avg_lat:.3f}s | {p95_lat:.3f}s |"
-                )
-            lines.append("")
-
+    # Analysis section
+    lines.extend([
+        "---",
+        "",
+        "## Analysis",
+        "",
+    ])
+    
     # Findings
     if findings:
-        lines.extend(["## Findings", ""])
-        for finding in findings:
-            icon = (
-                "✅"
-                if finding["type"] == "success"
-                else "⚠️"
-                if finding["type"] == "warning"
-                else "❌"
-                if finding["type"] == "error"
-                else "ℹ️"
-            )
-            lines.extend(
-                [f"### {icon} {finding['title']}", "", finding["description"], ""]
-            )
-
+        lines.append("### Key Findings")
+        lines.append("")
+        for i, finding in enumerate(findings, 1):
+            severity = finding["type"].upper()
+            lines.append(f"{i}. **[{severity}]** {finding['title']}: {finding['description']}")
+        lines.append("")
+    
     # Recommendations
     if recommendations:
-        lines.extend(["## Recommendations", ""])
+        lines.append("### Recommendations")
+        lines.append("")
         for i, rec in enumerate(recommendations, 1):
             lines.append(f"{i}. {rec}")
         lines.append("")
 
-    # Test Configuration
-    lines.extend(
-        [
-            "## Test Configuration",
-            "",
-            "### Methodology",
-            "- Clients emit per-request metrics in JSONL format",
-            "- Metrics are aggregated post-execution",
-            "- Latency includes end-to-end request time",
-            "",
-            "### Environment",
-            f"- Target Cluster: {run_data.get('target', 'unknown')}",
-            f"- Service Partition: {service_info.get('partition', 'unknown')}",
-            f"- Service GPUs: {service_info.get('num_gpus', 0)}",
-            f"- Service Image: {service_info.get('image', 'unknown')}",
-            "",
-        ]
-    )
+    # KF2 Bottleneck Attribution
+    if HAS_BOTTLENECK and classify_bottleneck:
+        try:
+            bottleneck_analysis = classify_bottleneck(summary)
+            bottleneck_report = format_bottleneck_report(bottleneck_analysis)
+            lines.extend([
+                "---",
+                "",
+                bottleneck_report,
+            ])
+        except Exception:
+            pass
 
-    # Log Analysis (if logs available)
+    # Log Analysis
     try:
         from reporting.log_analyzer import generate_log_summary_for_report
         _, log_markdown = generate_log_summary_for_report(benchmark_id)
-        lines.append(log_markdown)
+        if log_markdown:
+            lines.extend([
+                "---",
+                "",
+                log_markdown,
+            ])
     except Exception:
-        pass  # Skip log analysis if it fails
+        pass
 
-    # Reproducibility
-    lines.extend(
-        [
-            "## Reproducibility",
-            "",
-            "To rerun this benchmark:",
-            "```bash",
-            "python src/frontend.py examples/recipe_<service_type>.yaml",
-            "```",
-            "",
-            f"- Recipe Hash: {run_data.get('recipe_hash', 'unknown')[:8]}",
-            f"- Git Commit: {run_data.get('git_commit', 'unknown')[:8] if run_data.get('git_commit') else 'unknown'}",
-            f"- Run Date: {run_data.get('created_at', 'unknown')}",
-            "",
-            "---",
-            "*Report generated by AI Factory Benchmarking Framework*",
-            "",
-        ]
-    )
+    # Methodology
+    lines.extend([
+        "---",
+        "",
+        "## Methodology",
+        "",
+        "### Test Environment",
+        "",
+        "| Parameter | Value |",
+        "|-----------|-------|",
+        f"| Target Cluster | {run_data.get('target', 'N/A')} |",
+        f"| Service Image | `{service_info.get('image', 'N/A')}` |",
+        f"| Run Date | {run_data.get('created_at', 'N/A')[:19] if run_data.get('created_at') else 'N/A'} |",
+        "",
+        "### Reproducibility",
+        "",
+        "To reproduce this benchmark:",
+        "",
+        "```bash",
+        f"python src/frontend.py examples/recipe_{service_type}.yaml",
+        "```",
+        "",
+        "---",
+        "",
+        "*Report generated by AI Factory Benchmarking Framework*",
+        "",
+    ])
 
     return "\n".join(lines)
 
@@ -580,7 +627,23 @@ def write_report_files(
         print("  Skipping plots (matplotlib not installed)")
         plot_files = {}
 
-    return {"markdown": md_file, "json": json_file, "plots": plot_files}
+    # Generate Prometheus metrics file
+    if HAS_PROMETHEUS and format_prometheus_metrics:
+        print("  Generating Prometheus metrics file...")
+        service_type = summary.get("service_type", "unknown")
+        prom_content = format_prometheus_metrics(
+            summary, 
+            benchmark_id, 
+            service_type, 
+            run_data=run_data
+        )
+        prom_file = reports_dir / "metrics.txt"
+        with open(prom_file, "w") as f:
+            f.write(prom_content)
+    else:
+        prom_file = None
+
+    return {"markdown": md_file, "json": json_file, "plots": plot_files, "prometheus": prom_file}
 
 
 def generate_benchmark_report(
@@ -622,3 +685,95 @@ def generate_benchmark_report(
     # Generate reports
     print("  Generating report files...")
     return write_report_files(benchmark_id, summary, requests)
+
+
+def generate_sweep_report(
+    benchmark_ids: List[str],
+    slo_threshold: Optional[float] = None,
+    output_name: Optional[str] = None,
+) -> Dict[str, Path]:
+    """
+    Generate a sweep report with KF1 saturation analysis from multiple benchmark runs.
+
+    Args:
+        benchmark_ids: List of benchmark IDs from a concurrency sweep
+        slo_threshold: Optional SLO threshold for P99 latency (seconds)
+        output_name: Optional custom name for the report
+
+    Returns:
+        Dictionary with paths to generated files
+    """
+    if not HAS_SATURATION:
+        raise ImportError("Saturation analysis module not available")
+
+    if len(benchmark_ids) < 2:
+        raise ValueError("Sweep report requires at least 2 benchmark IDs")
+
+    print(f"Generating sweep report for {len(benchmark_ids)} benchmarks...")
+
+    # Load sweep results
+    sweep_results = load_sweep_results(benchmark_ids)
+    if not sweep_results:
+        raise ValueError("No valid summaries found for provided benchmark IDs")
+
+    # Analyze saturation
+    print("  Analyzing saturation points...")
+    analysis = analyze_saturation(sweep_results, slo_threshold)
+
+    # Create output directory
+    report_name = output_name or f"sweep_{benchmark_ids[0]}_{benchmark_ids[-1]}"
+    reports_dir = Path(f"reports/{report_name}")
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate saturation report section
+    saturation_md = format_saturation_report(analysis)
+
+    # Build full report
+    lines = [
+        "# Concurrency Sweep Analysis Report",
+        "",
+        f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC",
+        f"**Benchmarks Analyzed:** {len(benchmark_ids)}",
+        f"**Benchmark IDs:** {', '.join(benchmark_ids)}",
+        "",
+        "---",
+        "",
+        saturation_md,
+        "",
+        "## Individual Benchmark Summaries",
+        "",
+        "| Benchmark ID | Concurrency | Throughput (RPS) | P99 Latency (ms) | Success Rate |",
+        "|--------------|-------------|------------------|------------------|--------------|",
+    ]
+
+    for result in sorted(sweep_results, key=lambda x: x.get("concurrency", x.get("num_clients", 0))):
+        bid = result.get("benchmark_id", "?")
+        conc = result.get("concurrency", result.get("num_clients", "?"))
+        rps = result.get("requests_per_second", 0)
+        p99 = result.get("latency_s", {}).get("p99", 0) * 1000
+        success = result.get("success_rate", 0)
+        lines.append(f"| {bid} | {conc} | {rps:.2f} | {p99:.1f} | {success:.1f}% |")
+
+    lines.extend([
+        "",
+        "---",
+        "*Report generated by AI Factory Benchmarking Framework - Saturation Finder (KF1)*",
+    ])
+
+    # Write report
+    md_file = reports_dir / "sweep_report.md"
+    with open(md_file, "w") as f:
+        f.write("\n".join(lines))
+
+    # Write JSON
+    json_file = reports_dir / "sweep_analysis.json"
+    with open(json_file, "w") as f:
+        json.dump({
+            "benchmark_ids": benchmark_ids,
+            "analysis": analysis,
+            "sweep_results": sweep_results,
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+        }, f, indent=2)
+
+    print(f"✓ Sweep report generated: {md_file}")
+    return {"markdown": md_file, "json": json_file}

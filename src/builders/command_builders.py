@@ -375,14 +375,23 @@ INSERT_START=$(date +%s.%N)
 insert_errors=0
 
 for i in $(seq 1 {num_vectors}); do
-  EMBEDDING=$(python3 -c "import random; print([random.random() for _ in range({dim})])")
-  
+  # Generate embedding using Python with proper JSON formatting
   start_time=$(date +%s.%N)
   start_timestamp=$(date +%s)
   
+  EMBEDDING_JSON=$(python3 << EOF
+import random
+import json
+
+embedding = [random.random() for _ in range({dim})]
+payload = {{"ids": ["id_$i"], "embeddings": [embedding]}}
+print(json.dumps(payload))
+EOF
+)
+  
   HTTP_CODE=$(curl -s -w "%{{http_code}}" -o /tmp/chroma_resp_$i.json -X POST "$API_BASE/collections/$COLLECTION_ID/add" \\
     -H "Content-Type: application/json" \\
-    -d "{{\\"ids\\": [\\"id_$i\\"], \\"embeddings\\": [$EMBEDDING]}}")
+    -d "$EMBEDDING_JSON")
   
   end_time=$(date +%s.%N)
   latency=$(echo "$end_time - $start_time" | bc)
@@ -416,14 +425,23 @@ QUERY_START=$(date +%s.%N)
 query_errors=0
 
 for i in $(seq 1 {num_queries}); do
-  QUERY_VEC=$(python3 -c "import random; print([random.random() for _ in range({dim})])")
-  
+  # Generate query vector using Python with proper JSON formatting
   start_time=$(date +%s.%N)
   start_timestamp=$(date +%s)
   
+  QUERY_JSON=$(python3 << EOF
+import random
+import json
+
+query_vec = [random.random() for _ in range({dim})]
+payload = {{"query_embeddings": [query_vec], "n_results": {top_k}}}
+print(json.dumps(payload))
+EOF
+)
+  
   HTTP_CODE=$(curl -s -w "%{{http_code}}" -o /tmp/chroma_query_$i.json -X POST "$API_BASE/collections/$COLLECTION_ID/query" \\
     -H "Content-Type: application/json" \\
-    -d "{{\\"query_embeddings\\": [$QUERY_VEC], \\"n_results\\": {top_k}}}")
+    -d "$QUERY_JSON")
   
   end_time=$(date +%s.%N)
   latency=$(echo "$end_time - $start_time" | bc)
@@ -797,24 +815,33 @@ echo 'Benchmark complete'"""
 
 
 def build_redis_service_command(settings: Dict[str, Any]) -> str:
-    """Build Redis service startup command."""
+    """Build Redis service startup command.
+    
+    Uses shell wrapper to keep service running with proper logging.
+    Sets LC_ALL=C to fix locale issues in containers.
+    """
     port = settings.get("port", 6379)
     appendonly = settings.get("appendonly", False)
     maxmemory = settings.get("maxmemory", "")
     maxmemory_policy = settings.get("maxmemory_policy", "noeviction")
 
-    cmd_parts = [f"redis-server --port {port} --bind 0.0.0.0 --protected-mode no"]
-
+    # Build redis-server arguments
+    redis_args = f"--port {port} --bind 0.0.0.0 --protected-mode no --dir /tmp --save '' --loglevel notice"
+    
     if appendonly:
-        cmd_parts[0] += " --appendonly yes"
+        redis_args += " --appendonly yes"
     if maxmemory:
-        cmd_parts[0] += f" --maxmemory {maxmemory} --maxmemory-policy {maxmemory_policy}"
+        redis_args += f" --maxmemory {maxmemory} --maxmemory-policy {maxmemory_policy}"
 
-    return cmd_parts[0]
+    # Use shell wrapper with locale fix to keep service running
+    return f"""/bin/sh -c 'export LC_ALL=C && export LANG=C && redis-server {redis_args}'"""
 
 
 def build_redis_stress_client_command(settings: Dict[str, Any]) -> str:
-    """Build Redis stress test client command with JSONL output."""
+    """Build Redis stress test client command with JSONL output.
+    
+    Uses apptainer exec with Redis container to run redis-cli commands.
+    """
     num_requests = settings.get("num_requests", 10000)
     key_size = settings.get("key_size_bytes", 32)
     value_size = settings.get("value_size_bytes", 256)
@@ -828,11 +855,23 @@ echo "Key size: {key_size} bytes"
 echo "Value size: {value_size} bytes"
 echo ""
 
+# Load Apptainer and pull Redis container for redis-cli
+module load Apptainer 2>/dev/null || true
+if [ ! -f redis_latest.sif ]; then
+  echo "Pulling Redis container for redis-cli..."
+  apptainer pull docker://redis:latest
+fi
+
+# Define redis-cli wrapper using apptainer
+redis_cli() {{
+  apptainer exec redis_latest.sif redis-cli "$@"
+}}
+
 echo "Waiting for Redis to be ready..."
 MAX_RETRIES=30
 RETRY=0
 while [ $RETRY -lt $MAX_RETRIES ]; do
-  if redis-cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT PING 2>/dev/null | grep -q PONG; then
+  if redis_cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT PING 2>/dev/null | grep -q PONG; then
     echo "✓ Redis is ready!"
     break
   fi
@@ -860,10 +899,10 @@ for i in $(seq 1 {num_requests}); do
   start_time=$(date +%s.%N)
   start_ts=$(date +%s)
   
-  result=$(redis-cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT SET "$KEY" "$VALUE" 2>&1)
+  result=$(redis_cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT SET "$KEY" "$VALUE" 2>&1)
   
   end_time=$(date +%s.%N)
-  latency=$(echo "$end_time - $start_time" | bc)
+  latency=$(printf "%.6f" $(echo "$end_time - $start_time" | bc))
   
   if echo "$result" | grep -q "OK"; then
     echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "redis", "operation": "SET", "request_id": '$i'}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
@@ -892,10 +931,10 @@ for i in $(seq 1 {num_requests}); do
   start_time=$(date +%s.%N)
   start_ts=$(date +%s)
   
-  result=$(redis-cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT GET "$KEY" 2>&1)
+  result=$(redis_cli -h $SERVICE_HOSTNAME -p $SERVICE_PORT GET "$KEY" 2>&1)
   
   end_time=$(date +%s.%N)
-  latency=$(echo "$end_time - $start_time" | bc)
+  latency=$(printf "%.6f" $(echo "$end_time - $start_time" | bc))
   
   if [ -n "$result" ] && ! echo "$result" | grep -q "error"; then
     echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "redis", "operation": "GET", "request_id": '$((i + {num_requests}))'}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
@@ -929,15 +968,22 @@ echo "Total: $((num_requests * 2)) ops, ${{TOTAL_OPS}} ops/sec"
 
 
 def build_minio_service_command(settings: Dict[str, Any]) -> str:
-    """Build MinIO service startup command."""
-    data_dir = settings.get("data_dir", "/data")
+    """Build MinIO service startup command.
+    
+    Uses /tmp/minio-data as writable data directory for HPC environments.
+    """
+    data_dir = settings.get("data_dir", "/tmp/minio-data")
     console_port = settings.get("console_port", 9001)
 
-    return f"minio server {data_dir} --console-address \":${{console_port:-{console_port}}}\""
+    # Create data directory and run MinIO with shell wrapper
+    return f"""/bin/sh -c 'mkdir -p /tmp/minio-data && minio server /tmp/minio-data --console-address ":{console_port}"'"""
 
 
 def build_minio_stress_client_command(settings: Dict[str, Any]) -> str:
-    """Build MinIO stress test client command with JSONL output."""
+    """Build MinIO stress test client command with JSONL output.
+    
+    Uses apptainer exec with MinIO mc container for object storage operations.
+    """
     num_objects = settings.get("num_objects", 100)
     object_size = settings.get("object_size_bytes", 1048576)  # 1MB default
     bucket = settings.get("bucket", "benchmark")
@@ -951,14 +997,27 @@ echo "Object size: {object_size} bytes"
 echo "Bucket: {bucket}"
 echo ""
 
-# Configure mc alias
+# Load Apptainer and pull MinIO mc container
+module load Apptainer 2>/dev/null || true
+if [ ! -f minio_mc.sif ]; then
+  echo "Pulling MinIO mc container..."
+  apptainer pull --name minio_mc.sif docker://minio/mc:latest
+fi
+
+# Configure mc alias using environment variable
 export MC_HOST_minio="http://${{MINIO_ROOT_USER:-minioadmin}}:${{MINIO_ROOT_PASSWORD:-minioadmin}}@$SERVICE_HOSTNAME:$SERVICE_PORT"
+
+# Define mc wrapper using apptainer
+mc_cmd() {{
+  apptainer exec --env MC_HOST_minio="$MC_HOST_minio" minio_mc.sif mc "$@"
+}}
 
 echo "Waiting for MinIO to be ready..."
 MAX_RETRIES=30
 RETRY=0
 while [ $RETRY -lt $MAX_RETRIES ]; do
-  if curl -s "http://$SERVICE_HOSTNAME:$SERVICE_PORT/minio/health/ready" | grep -q ""; then
+  # Use curl to check health endpoint
+  if curl -sf "http://$SERVICE_HOSTNAME:$SERVICE_PORT/minio/health/live" >/dev/null 2>&1; then
     echo "✓ MinIO is ready!"
     break
   fi
@@ -972,7 +1031,7 @@ if [ $RETRY -eq $MAX_RETRIES ]; then
 fi
 
 # Create bucket
-mc mb minio/{bucket} 2>/dev/null || echo "Bucket may already exist"
+mc_cmd mb minio/{bucket} 2>/dev/null || echo "Bucket may already exist"
 
 # Initialize JSONL output
 echo '{{"benchmark_id": "'$BENCHMARK_ID'", "service_type": "minio", "test_start": "'$(date -Iseconds)'"}}' > "$BENCHMARK_OUTPUT_DIR/requests.jsonl"
@@ -989,11 +1048,11 @@ for i in $(seq 1 {num_objects}); do
   start_time=$(date +%s.%N)
   start_ts=$(date +%s)
   
-  result=$(mc cp /tmp/testfile minio/{bucket}/object_$i 2>&1)
+  result=$(mc_cmd cp /tmp/testfile minio/{bucket}/object_$i 2>&1)
   exit_code=$?
   
   end_time=$(date +%s.%N)
-  latency=$(echo "$end_time - $start_time" | bc)
+  latency=$(printf "%.6f" $(echo "$end_time - $start_time" | bc))
   
   if [ $exit_code -eq 0 ]; then
     echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "minio", "operation": "PUT", "request_id": '$i', "bytes": {object_size}}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
@@ -1021,11 +1080,11 @@ for i in $(seq 1 {num_objects}); do
   start_time=$(date +%s.%N)
   start_ts=$(date +%s)
   
-  result=$(mc cp minio/{bucket}/object_$i /tmp/downloaded_$i 2>&1)
+  result=$(mc_cmd cp minio/{bucket}/object_$i /tmp/downloaded_$i 2>&1)
   exit_code=$?
   
   end_time=$(date +%s.%N)
-  latency=$(echo "$end_time - $start_time" | bc)
+  latency=$(printf "%.6f" $(echo "$end_time - $start_time" | bc))
   
   if [ $exit_code -eq 0 ]; then
     echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "minio", "operation": "GET", "request_id": '$((i + {num_objects}))', "bytes": {object_size}}}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl
@@ -1062,9 +1121,14 @@ rm -f /tmp/testfile
 
 
 def build_qdrant_service_command(settings: Dict[str, Any]) -> str:
-    """Build Qdrant service startup command."""
-    # Qdrant uses default ports 6333 (HTTP) and 6334 (gRPC)
-    return "./qdrant"
+    """Build Qdrant service startup command.
+    
+    Uses QDRANT__STORAGE__STORAGE_PATH env var for writable storage in HPC environments.
+    """
+    port = settings.get("port", 6333)
+    # Qdrant uses environment variables for configuration
+    # QDRANT__STORAGE__STORAGE_PATH sets the storage directory
+    return f"""/bin/sh -c 'mkdir -p /tmp/qdrant-storage && export QDRANT__STORAGE__STORAGE_PATH=/tmp/qdrant-storage && /qdrant/qdrant'"""
 
 
 def build_qdrant_stress_client_command(settings: Dict[str, Any]) -> str:
@@ -1092,7 +1156,8 @@ echo "Waiting for Qdrant to be ready..."
 MAX_RETRIES=30
 RETRY=0
 while [ $RETRY -lt $MAX_RETRIES ]; do
-  if curl -s "$QDRANT_URL/healthz" 2>/dev/null | grep -q "ok"; then
+  # Check root endpoint for "qdrant" in response (more reliable than /healthz)
+  if curl -sf "$QDRANT_URL/" 2>/dev/null | grep -q "qdrant"; then
     echo "✓ Qdrant is ready!"
     break
   fi
@@ -1134,26 +1199,31 @@ for batch_start in $(seq 0 {batch_size} {num_points}); do
     batch_end={num_points}
   fi
   
-  # Generate batch payload
-  points=""
-  for i in $(seq $batch_start $((batch_end - 1))); do
-    # Generate random vector
-    vector=$(python3 -c "import random; print([random.random() for _ in range({dim})])")
-    if [ -n "$points" ]; then
-      points="$points,"
-    fi
-    points="$points{{\\\"id\\\": $i, \\\"vector\\\": $vector}}"
-  done
-  
+  # Generate batch payload using Python for proper JSON formatting
   start_time=$(date +%s.%N)
   start_ts=$(date +%s)
   
+  # Use Python to generate properly formatted JSON batch
+  batch_json=$(python3 << EOF
+import random
+import json
+
+points = []
+for i in range($batch_start, min($batch_end, {num_points})):
+    vector = [random.random() for _ in range({dim})]
+    points.append({{"id": i, "vector": vector}})
+
+payload = {{"points": points}}
+print(json.dumps(payload))
+EOF
+)
+  
   result=$(curl -s -X PUT "$QDRANT_URL/collections/{collection}/points" \\
     -H "Content-Type: application/json" \\
-    -d "{{\\\"points\\\": [$points]}}" 2>&1)
+    -d "$batch_json" 2>&1)
   
   end_time=$(date +%s.%N)
-  latency=$(echo "$end_time - $start_time" | bc)
+  latency=$(printf "%.6f" $(echo "$end_time - $start_time" | bc))
   batch_count=$((batch_end - batch_start))
   
   if echo "$result" | grep -q '"status":"ok"'; then
@@ -1177,18 +1247,26 @@ QUERY_START=$(date +%s.%N)
 query_errors=0
 
 for i in $(seq 1 {num_queries}); do
-  # Generate random query vector
-  query_vector=$(python3 -c "import random; print([random.random() for _ in range({dim})])")
-  
+  # Generate random query vector using Python for proper JSON formatting
   start_time=$(date +%s.%N)
   start_ts=$(date +%s)
   
+  query_json=$(python3 << EOF
+import random
+import json
+
+vector = [random.random() for _ in range({dim})]
+payload = {{"vector": vector, "limit": {top_k}}}
+print(json.dumps(payload))
+EOF
+)
+  
   result=$(curl -s -X POST "$QDRANT_URL/collections/{collection}/points/search" \\
     -H "Content-Type: application/json" \\
-    -d "{{\\\"vector\\\": $query_vector, \\\"limit\\\": {top_k}}}" 2>&1)
+    -d "$query_json" 2>&1)
   
   end_time=$(date +%s.%N)
-  latency=$(echo "$end_time - $start_time" | bc)
+  latency=$(printf "%.6f" $(echo "$end_time - $start_time" | bc))
   
   if echo "$result" | grep -q '"result"'; then
     echo '{{"timestamp_start": '$start_ts', "timestamp_end": '$(date +%s)', "latency_s": '$latency', "success": true, "service_type": "qdrant", "operation": "QUERY", "request_id": '$((i + {num_points}))' }}' >> $BENCHMARK_OUTPUT_DIR/requests.jsonl

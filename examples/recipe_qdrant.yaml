@@ -5,8 +5,10 @@ service:
   name: "qdrant-vectordb"
   type: "qdrant"
   partition: "cpu"
+  num_gpus: 0
   nodes: 1
   time_limit: "00:30:00"
+  account: "p200981"
   settings:
     port: 6333
 
@@ -14,6 +16,7 @@ client:
   name: "qdrant-benchmark"
   type: "qdrant_stress"
   partition: "cpu"
+  num_gpus: 0
   nodes: 1
   time_limit: "00:25:00"
   settings:

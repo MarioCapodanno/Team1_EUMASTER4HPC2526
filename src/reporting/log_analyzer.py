@@ -332,51 +332,60 @@ def format_log_summary_markdown(summary: LogSummary) -> str:
         Markdown-formatted string
     """
     lines = [
-        "## Log Analysis Summary",
+        "## Log Analysis",
         "",
-        f"**Files analyzed:** {len(summary.files_analyzed)}",
-        f"**Total lines:** {summary.total_lines:,}",
-        f"**Errors detected:** {summary.error_count}",
-        f"**Warnings detected:** {summary.warning_count}",
+        "| Metric | Value |",
+        "|--------|-------|",
+        f"| Files Analyzed | {len(summary.files_analyzed)} |",
+        f"| Total Lines | {summary.total_lines:,} |",
+        f"| Errors | {summary.error_count} |",
+        f"| Warnings | {summary.warning_count} |",
         "",
     ]
     
     if summary.top_issues:
         lines.extend([
-            "### Top Issues",
+            "### Issues Detected",
             "",
-            "| Category | Description | Count | Severity |",
-            "|----------|-------------|-------|----------|",
+            "| Severity | Description | Count |",
+            "|----------|-------------|-------|",
         ])
         
         for issue in summary.top_issues[:5]:
-            lines.append(
-                f"| {issue['category']} | {issue['description']} | {issue['count']} | {issue['severity'].upper()} |"
-            )
+            severity = issue['severity'].upper()
+            desc = issue['description'][:40]  # Truncate long descriptions
+            lines.append(f"| {severity} | {desc} | {issue['count']} |")
         
         lines.append("")
         
-        # Add examples for top issues
-        has_examples = any(issue.get('examples') for issue in summary.top_issues[:3])
+        # More compact example section
+        has_examples = any(issue.get('examples') for issue in summary.top_issues[:2])
         if has_examples:
             lines.extend([
-                "### Example Log Entries",
+                "### Sample Log Entries",
                 "",
             ])
             
-            for issue in summary.top_issues[:3]:
+            for issue in summary.top_issues[:2]:  # Only top 2
                 if issue.get('examples'):
-                    lines.append(f"**{issue['description']}:**")
+                    lines.append(f"**{issue['description'][:50]}**")
+                    lines.append("")
                     lines.append("```")
-                    for ex in issue['examples'][:2]:
-                        lines.append(ex[:150] + ("..." if len(ex) > 150 else ""))
+                    for ex in issue['examples'][:1]:  # Only 1 example each
+                        # Extract the most relevant part (after timestamp)
+                        clean_ex = ex.strip()
+                        # Try to extract just the message
+                        if 'msg=' in clean_ex:
+                            msg_part = clean_ex.split('msg=')[-1][:80]
+                            clean_ex = msg_part
+                        elif len(clean_ex) > 80:
+                            clean_ex = clean_ex[:80] + "..."
+                        lines.append(clean_ex)
                     lines.append("```")
                     lines.append("")
     else:
         lines.extend([
-            "### Status",
-            "",
-            "✓ No significant issues detected in logs.",
+            "*No significant errors or warnings detected.*",
             "",
         ])
     
@@ -396,7 +405,7 @@ def generate_log_summary_for_report(benchmark_id: str) -> Tuple[Optional[LogSumm
     summary = analyze_benchmark_logs(benchmark_id)
     
     if summary is None:
-        return None, "\n## Log Analysis Summary\n\n*No logs available for analysis.*\n"
+        return None, ""
     
     # Write the JSON summary
     write_log_summary(benchmark_id, summary)
