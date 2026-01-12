@@ -4,13 +4,9 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MeluXina](https://img.shields.io/badge/HPC-MeluXina-orange.svg)](https://luxprovide.lu/)
 
-A comprehensive benchmarking framework for AI services on High-Performance Computing infrastructure, developed for the **EUMASTER4HPC Data Science Challenge 2025-2026**.
-
-**Target Platform:** [MeluXina Supercomputer](https://luxprovide.lu/) (Luxembourg) - Top 50 in TOP500
-
 ---
 
-## 🎯 Overview
+##  Overview
 
 This framework automates the complete benchmarking lifecycle for containerized AI services:
 
