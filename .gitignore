@@ -54,3 +54,4 @@ config/grafana/provisioning/datasources/*.local.yaml
 analysis/
 utils/
 batch_scripts/
+.zed/
