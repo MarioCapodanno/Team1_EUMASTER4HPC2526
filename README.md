@@ -1,100 +1,354 @@
-# Student Challenge 2025-2026 (Benchmarking AI Factories on MeluXina supercomputer)
+# AI Factory Benchmarking Framework
 
-The objective of this challenge is to prepare students for the upcoming AI Factories in the European Union. These AI Factories will harness the power of next-generation HPC and AI systems to revolutionise data processing, analytics, and model deployment. Through this challenge, students will gain practical skills in AI benchmarking, system monitoring, and real-world deployment scenarios—equipping them to design and operate future AI Factory workflows at scale.
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![MeluXina](https://img.shields.io/badge/HPC-MeluXina-orange.svg)](https://luxprovide.lu/)
 
-# Global plan of the challenge
+---
 
-The challenge will span 4 months, with students organised into teams. It follows these steps:
+##  Overview
 
-## Phase 1 :
+This framework automates the complete benchmarking lifecycle for containerized AI services:
 
-### Onboarding
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Recipe    │───▶│   Deploy    │───▶│  Load Gen   │───▶│   Analyze   │───▶│   Report    │
+│   (YAML)    │    │  (Slurm)    │    │  (Clients)  │    │  (Metrics)  │    │  (MD/JSON)  │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
 
-- Introduction to MeluXina and best practices for research and commercial HPC use.
-- Familiarisation with Slurm, storage systems, and monitoring tools.
-- Exploration & Adoption: In-depth exploration of the assigned topic.
-- Define objectives, identify tools and methodologies, and clarify performance metrics.
+ilities:**
+-  **One-command execution** from declarative YAML recipes
+-  **Automated analysis** including saturation detection and bottleneck attribution
+- 🔄**Full reproducibility** with embedded metadata and rerun support
+-  **Dual interface** with CLI and web UI feature parity
+-  **Real-time monitoring** via Prometheus/Grafana integration
 
-### What to do:
+---
 
-- Create your own project github (public) and configure it with milestones
-- Comment on the issue 1 (https://github.com/LuxProvide/EUMASTER4HPC2526/issues/1 ) to mention your github URL
-- Do the onboaring and the examples on meluxina
-- Load the example's result/log files on your github
-- Schedule meetings (within the group and brainstorm the project)
-- Define clear design, identify the tech stacks, create issues on your gitLab
+##  Installation
 
-### What I need to look to at the end of the phase:
+### Prerequisites
+- Python 3.10+
+- SSH access to MeluXina (or compatible HPC cluster)
+- SSH key authentication configured
 
-- Your github
-- The logs of the example (per user)
-- The design (README file)
-- The issues & tasks
+### Setup
 
+```bash
+# Clone the repository
+git clone https://github.com/EUMASTER4HPC/Team1_EUMASTER4HPC2526.git
+cd Team1_EUMASTER4HPC2526
 
-## Phase 2 :
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or: venv\Scripts\activate  # Windows
 
--Prototyping: Development of applications, monitoring dashboards, or benchmarking scripts.
--Iterative testing and validation.
+# Install dependencies
+pip install -r requirements.txt
 
-## Phase 3:
+# Verify installation
+python src/frontend.py --help
+```
 
-- Evaluation & Testing: Deployment on MeluXina at realistic scales.
-- Performance measurements, resource usage profiling, and scalability testing.
-- Report Building: Documentation of methodologies, results, and recommended best practices.
-- Creation of comprehensive final reports.
+### Configuration
 
-## Phase 4:
+Create `~/.melussh` or configure SSH with host alias `meluxina`:
 
--Defense: Each team will present their results and defend their findings in a final session.
-Q&A and feedback for improvement.
+```bash
+# ~/.ssh/config
+Host meluxina
+    HostName login.lxp.lu
+    User your_username
+    IdentityFile ~/.ssh/id_meluxina
+```
 
-# Challenge topics: Developing a global benchmarking framework for AI Factory workloads
+---
 
-## Objectives
+##  Quick Start
 
-Design and implement a unified benchmarking framework to evaluate end-to-end performance for critical AI Factory components.
-Include benchmarks for:
+### Run Your First Benchmark
 
-- File storage, relational databases (e.g., PostgreSQL), and object storage (e.g., S3)
-- Inference servers (vLLM, Triton, etc.)
-- Vector databases (Chroma, Faiss, Milvus, Weaviate)
-- Enable reproducible, modular benchmarking scenarios using Slurm orchestration.
-- Provide comparative insights, performance guidelines, and scalability assessments.
+```bash
+# 1. Run a Redis benchmark
+python src/frontend.py examples/recipe_redis.yaml
 
-## Timeline
+# 2. Monitor execution
+python src/frontend.py --watch BM-20260112-001
 
-- Month 1: Analyse MeluXina’s architecture; survey APIs and services for storage, inference, and retrieval; design benchmark framework architecture.
-- Month 2: Develop modular benchmark components:
-    - Generic services deployment : Storage, Inference, Vector DB
-    - Load generators based on Dask/Spark/Slurm for inference and retrieval tasks
-    - Common data schema and metrics collection interface
-- Month 3: Execute benchmarks using Slurm; collect throughput, latency, resource usage, and scaling metrics across all components.
-- Month 4: Integrate results; generate dashboards and comparisons; finalise documentation and present findings.
+# 3. Generate analysis report
+python src/frontend.py --report BM-20260112-001
 
-## Tools & stacks :
+# 4. View results in web interface
+python src/frontend.py --web
+# Open http://localhost:5000
+```
 
-- Modular framework using Python, and Slurm
-- Python DB drivers (e.g., psycopg2), S3 SDK for storage benchmarks
-- GPU-accelerated inference servers in containerised environments
-- Dockerised vector DB deployments for scalable search testing
-- Prometheus & Grafana for unified monitoring
-- Slurm for orchestrated, synchronised benchmark execution
-- Supervision & Mentoring
+### Interactive Mode
 
-## Supervision by Dr. Farouk Mansouri:
+```bash
+python src/frontend.py --ui
+```
 
-- Dr. Mansouri Farouk will oversee the challenge, providing strategic and technical supervision with a load of 4 hours per month.
-Responsibilities:
-- Overall coordination and alignment with AI Factory vision.
-Weekly progress reviews.
-- Technical deep-dives on HPC practices and system optimisation.
+Provides a guided menu for benchmark operations.
 
+---
 
-## Mentoring:
+##  Supported Services
 
-- Dedicated mentoring sessions will take place one per week for:
-- Technical support and best practices.
--Guidance on tool selection, deployment, and optimisation.
--Assistance with debugging, benchmarking analysis, and report writing.
-Preparation for the final defense.
+| Category | Service | Port | Use Case |
+|----------|---------|------|----------|
+| **Inference** | vLLM | 8000 | High-performance LLM serving with PagedAttention |
+| | Ollama | 11434 | Lightweight local LLM deployment |
+| **Database** | PostgreSQL | 5432 | OLTP transactional workloads |
+| | Redis | 6379 | In-memory caching and pub/sub |
+| | MinIO | 9000 | S3-compatible object storage |
+| **Vector DB** | ChromaDB | 8000 | Embedding storage for RAG |
+| | Qdrant | 6333 | High-performance vector search |
+
+---
+
+##  Recipe Format
+
+Recipes define complete experiments in declarative YAML:
+
+```yaml
+configuration:
+  target: meluxina
+
+service:
+  type: vllm                    # Service type
+  partition: gpu                # Slurm partition
+  num_gpus: 1                   # GPU allocation
+  time_limit: "01:00:00"        # Job time limit
+  settings:
+    model: facebook/opt-125m   # Model to serve
+
+client:
+  type: vllm_smoke              # Client type
+  partition: cpu
+  settings:
+    num_requests: 100
+    max_tokens: 50
+
+benchmarks:
+  num_clients: 4                # Concurrent clients
+```
+
+See [`docs/RECIPE_REFERENCE.md`](docs/RECIPE_REFERENCE.md) for complete reference.
+
+---
+
+##  Automated Analysis
+
+### Saturation Detection
+
+Identifies the optimal operating point using maximum curvature analysis:
+
+```bash
+# Run concurrency sweep
+python src/frontend.py examples/recipe_redis.yaml --clients 1,2,4,8,16,32
+
+# Generate sweep report
+python src/frontend.py --sweep-report BM-001,BM-002,BM-003,BM-004,BM-005
+```
+
+**Outputs:**
+- Latency knee point (where P99 grows superlinearly)
+- Throughput saturation (max sustainable RPS)
+- SLO compliance limit (max concurrency under latency target)
+
+### Bottleneck Attribution
+
+Classifies limiting factors from resource utilization:
+
+| Bottleneck | Indicators |
+|------------|------------|
+| GPU-bound | GPU util >80%, stable CPU, rising TTFT |
+| CPU-bound | High CPU time, low GPU, stable memory |
+| Memory-bound | High RSS, OOM errors, latency spikes |
+| Queueing | Throughput plateau, exploding P99 |
+
+### Regression Detection
+
+```bash
+python src/frontend.py --compare BM-001 BM-002
+```
+
+Flags regressions when:
+- P99 latency increases >10%
+- Throughput decreases >10%
+- Success rate drops >1%
+
+---
+
+##  User Interfaces
+
+### Command-Line Interface
+
+```bash
+# Benchmark Operations
+python src/frontend.py <recipe.yaml>           # Run benchmark
+python src/frontend.py --ui                     # Interactive mode
+
+# Monitoring
+python src/frontend.py --list                   # List all benchmarks
+python src/frontend.py --watch <id>             # Live status
+python src/frontend.py --logs <id>              # View logs
+python src/frontend.py --stop <id>              # Cancel jobs
+
+# Results
+python src/frontend.py --collect <id>           # Download artifacts
+python src/frontend.py --metrics <id>           # View metrics
+python src/frontend.py --report <id>            # Generate report
+
+# Analysis
+python src/frontend.py --compare <a> <b>        # Regression detection
+python src/frontend.py --sweep-report <ids>     # Saturation analysis
+
+# Web Interface
+python src/frontend.py --web                    # Launch at :5000
+```
+
+### Web Interface
+
+Launch with `python src/frontend.py --web` and open http://localhost:5000
+
+**Pages:**
+- **Dashboard** - Overview of all benchmarks with status
+- **Run Recipe** - Deploy benchmarks from UI
+- **Benchmarks** - Detailed benchmark views
+- **Monitoring** - Prometheus/Grafana integration
+- **Metrics** - Charts and statistics
+- **Reports** - Generated analysis with plots
+
+---
+
+##  Project Structure
+
+```
+Team1_EUMASTER4HPC2526/
+├── src/
+│   ├── frontend.py              # CLI entry point, recipe parsing
+│   ├── core/
+│   │   ├── manager.py           # Service/client orchestration
+│   │   ├── aggregator.py        # Metrics aggregation
+│   │   ├── saturation.py        # KF1: Saturation detection
+│   │   ├── bottleneck.py        # KF2: Bottleneck attribution
+│   │   ├── lifecycle.py         # Job lifecycle management
+│   │   └── collector.py         # Artifact collection
+│   ├── infra/
+│   │   ├── communicator.py      # SSH/Slurm abstraction
+│   │   └── storage.py           # Benchmark state persistence
+│   ├── models/
+│   │   ├── service.py           # Service data model
+│   │   └── client.py            # Client data model
+│   ├── builders/
+│   │   └── command_builders.py  # Sbatch script generation
+│   ├── monitoring/
+│   │   ├── manager.py           # Prometheus/Grafana stack
+│   │   └── monitor.py           # Metrics collection
+│   ├── reporting/
+│   │   ├── reporter.py          # Report generation
+│   │   ├── plotting.py          # Chart generation
+│   │   └── artifacts.py         # Artifact I/O
+│   └── web/
+│       └── flask_app.py         # Web interface
+├── examples/                     # Recipe templates
+├── measurements/                 # Benchmark campaigns
+├── results/                      # Benchmark artifacts (gitignored)
+├── reports/                      # Generated reports
+├── docs/                         # Documentation
+│   ├── report.tex               # Academic LaTeX report
+│   ├── presentation.tex         # Beamer slides
+│   ├── RECIPE_REFERENCE.md      # Recipe format reference
+│   └── methodology.md           # Benchmarking methodology
+├── scripts/                      # Automation scripts
+├── requirements.txt              # Python dependencies
+└── README.md                     # This file
+```
+
+---
+
+##  Results Structure
+
+Each benchmark produces:
+
+```
+results/<benchmark_id>/
+├── run.json           # Complete metadata + embedded recipe
+├── requests.jsonl     # Per-request timing (microsecond precision)
+├── summary.json       # Aggregated metrics
+└── logs/              # Service and client logs
+
+reports/<benchmark_id>/
+├── report.md          # Human-readable analysis
+├── report.json        # Machine-readable summary
+└── plots/             # Visualization PNGs
+    ├── latency_percentiles.png
+    ├── throughput_timeline.png
+    └── success_rate.png
+```
+
+---
+
+##  Reproducibility
+
+Every benchmark is fully reproducible:
+
+```bash
+# Rerun with identical configuration
+python src/frontend.py --rerun BM-20260112-001
+```
+
+Captured metadata includes:
+- Complete YAML recipe (embedded)
+- Git commit hash
+- Container image digests
+- Slurm job IDs and node allocations
+- Timestamps for all lifecycle events
+
+---
+
+##  Documentation
+
+| Document | Description |
+|----------|-------------|
+| [`docs/report.tex`](docs/report.tex) | Academic LaTeX report |
+| [`docs/presentation.tex`](docs/presentation.tex) | Beamer presentation slides |
+| [`docs/RECIPE_REFERENCE.md`](docs/RECIPE_REFERENCE.md) | Complete recipe format reference |
+| [`docs/methodology.md`](docs/methodology.md) | Benchmarking methodology |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | System architecture documentation |
+
+---
+
+##  Technology Stack
+
+| Component | Technology |
+|-----------|------------|
+| Language | Python 3.10+ |
+| Cluster Communication | Fabric, Paramiko (SSH) |
+| Job Scheduling | Slurm |
+| Containerization | Apptainer/Singularity |
+| Web Framework | Flask |
+| Visualization | Matplotlib, Chart.js |
+| Monitoring | Prometheus, Grafana |
+| Target Platform | MeluXina (LuxProvide) |
+
+---
+
+##  Team
+
+**Team 1 — EUMASTER4HPC 2025-2026**
+
+| Member | 
+|--------|
+| Mario Capodanno 
+| Giuseppe | 
+| Can | 
+| Thies | 
+
+---
+
+*Developed for the EUMASTER4HPC Data Science Challenge 2025-2026*

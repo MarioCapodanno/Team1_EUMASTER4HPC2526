@@ -29,7 +29,7 @@ client:
   type: "ollama_smoke"
   partition: "cpu"
   num_gpus: 0
-  time_limit: "00:45:00"
+  time_limit: "00:10:00"
   
   settings:
     model: "llama2"

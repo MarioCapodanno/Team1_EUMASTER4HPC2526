@@ -1,0 +1,44 @@
+# =============================================================================
+# Ollama Benchmark Recipe - Custom Model Test
+# =============================================================================
+# Testing with gemma2:2b model (smaller, faster for testing)
+# =============================================================================
+
+configuration:
+  target: "meluxina"
+
+# =============================================================================
+# Service: Ollama LLM Server
+# =============================================================================
+service:
+  type: "ollama"
+  name: "ollama-gemma"
+  partition: "gpu"
+  num_gpus: 1
+  time_limit: "01:00:00"
+  account: "p200981"
+  
+  settings:
+    model: "gemma2:2b"          # Using gemma2:2b instead of llama2
+    warmup_seconds: 10          # Slightly longer for model download
+
+# =============================================================================
+# Client: Smoke Test
+# =============================================================================
+client:
+  type: "ollama_smoke"
+  partition: "cpu"
+  num_gpus: 0
+  time_limit: "00:15:00"
+  
+  settings:
+    model: "gemma2:2b"
+    num_requests: 3             # Quick test
+    max_retries: 30
+
+# =============================================================================
+# Benchmark Configuration
+# =============================================================================
+benchmarks:
+  num_clients: 1
+  metrics: ["latency", "throughput"]
