@@ -226,6 +226,9 @@ Launch with `python src/frontend.py --web` and open http://localhost:5000
 - **Reports** - Generated analysis with plots
 
 ---
+### Real time monitoring example
+
+![Graphana Dashboard]([http://url/to/img.png](https://ibb.co/d0BqgSJ8))
 
 ##  Project Structure
 
