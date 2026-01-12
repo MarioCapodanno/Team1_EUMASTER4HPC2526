@@ -20,7 +20,7 @@ This framework automates the complete benchmarking lifecycle for containerized A
 ilities:**
 -  **One-command execution** from declarative YAML recipes
 -  **Automated analysis** including saturation detection and bottleneck attribution
-- 🔄**Full reproducibility** with embedded metadata and rerun support
+- **Full reproducibility** with embedded metadata and rerun support
 -  **Dual interface** with CLI and web UI feature parity
 -  **Real-time monitoring** via Prometheus/Grafana integration
 
