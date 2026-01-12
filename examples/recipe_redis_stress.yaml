@@ -5,8 +5,10 @@ service:
   name: "redis-stress"
   type: "redis"
   partition: "cpu"
+  num_gpus: 0
   nodes: 1
   time_limit: "01:00:00"
+  account: "p200981"
   settings:
     port: 6379
     maxmemory: "4gb"
@@ -16,10 +18,11 @@ client:
   name: "redis-stress-client"
   type: "redis_stress"
   partition: "cpu"
+  num_gpus: 0
   nodes: 1
   time_limit: "00:50:00"
   settings:
-    num_requests: 10000
+    num_requests: 10000000
     key_size_bytes: 32
     value_size_bytes: 256
     warmup_delay: 10

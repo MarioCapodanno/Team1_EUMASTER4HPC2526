@@ -61,7 +61,7 @@
             },
             "targets": [
                 {
-                    "expr": "benchmark_throughput_rps{service=\"postgres\"}",
+                    "expr": "benchmark_throughput_rps{service=~\"$service\"}",
                     "legendFormat": "TPS",
                     "refId": "A"
                 }
@@ -121,7 +121,7 @@
             },
             "targets": [
                 {
-                    "expr": "benchmark_latency_seconds{service=\"postgres\",quantile=\"0.99\"}",
+                    "expr": "benchmark_latency_seconds{service=~\"$service\",quantile=\"0.99\"}",
                     "legendFormat": "P99 Latency",
                     "refId": "A"
                 }
@@ -206,7 +206,7 @@
             },
             "targets": [
                 {
-                    "expr": "benchmark_throughput_rps{service=\"postgres\"}",
+                    "expr": "benchmark_throughput_rps{service=~\"$service\"}",
                     "legendFormat": "TPS",
                     "refId": "A"
                 }
@@ -291,17 +291,17 @@
             },
             "targets": [
                 {
-                    "expr": "benchmark_latency_seconds{service=\"postgres\",quantile=\"0.5\"}",
+                    "expr": "benchmark_latency_seconds{service=~\"$service\",quantile=\"0.5\"}",
                     "legendFormat": "P50",
                     "refId": "A"
                 },
                 {
-                    "expr": "benchmark_latency_seconds{service=\"postgres\",quantile=\"0.9\"}",
+                    "expr": "benchmark_latency_seconds{service=~\"$service\",quantile=\"0.9\"}",
                     "legendFormat": "P90",
                     "refId": "B"
                 },
                 {
-                    "expr": "benchmark_latency_seconds{service=\"postgres\",quantile=\"0.99\"}",
+                    "expr": "benchmark_latency_seconds{service=~\"$service\",quantile=\"0.99\"}",
                     "legendFormat": "P99",
                     "refId": "C"
                 }
@@ -361,7 +361,7 @@
             },
             "targets": [
                 {
-                    "expr": "benchmark_success_rate{service=\"postgres\"}",
+                    "expr": "benchmark_success_rate{service=~\"$service\"}",
                     "legendFormat": "Success Rate",
                     "refId": "A"
                 }
@@ -412,7 +412,7 @@
             },
             "targets": [
                 {
-                    "expr": "benchmark_requests_total{service=\"postgres\"}",
+                    "expr": "benchmark_requests_total{service=~\"$service\"}",
                     "legendFormat": "Total Queries",
                     "refId": "A"
                 }
@@ -471,7 +471,7 @@
             },
             "targets": [
                 {
-                    "expr": "benchmark_requests_total{service=\"postgres\"} - benchmark_requests_success{service=\"postgres\"}",
+                    "expr": "benchmark_requests_total{service=~\"$service\"} - benchmark_requests_success{service=~\"$service\"}",
                     "legendFormat": "Failed Queries",
                     "refId": "A"
                 }
@@ -491,12 +491,43 @@
     "templating": {
         "list": [
             {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                },
+                "definition": "label_values(benchmark_requests_total, service)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Service",
+                "multi": true,
+                "name": "service",
+                "options": [],
+                "query": {
+                    "query": "label_values(benchmark_requests_total, service)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "(postgres|redis|chroma|qdrant)",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
                 "current": {},
                 "datasource": {
                     "type": "prometheus",
                     "uid": "prometheus"
                 },
-                "definition": "label_values(benchmark_requests_total{service=\"postgres\"}, benchmark_id)",
+                "definition": "label_values(benchmark_requests_total{service=~\"$service\"}, benchmark_id)",
                 "hide": 0,
                 "includeAll": true,
                 "label": "Benchmark ID",
@@ -504,7 +535,7 @@
                 "name": "benchmark_id",
                 "options": [],
                 "query": {
-                    "query": "label_values(benchmark_requests_total{service=\"postgres\"}, benchmark_id)",
+                    "query": "label_values(benchmark_requests_total{service=~\"$service\"}, benchmark_id)",
                     "refId": "StandardVariableQuery"
                 },
                 "refresh": 1,

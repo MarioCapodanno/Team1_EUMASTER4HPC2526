@@ -1,22 +1,62 @@
 # AI Factory Benchmarking Framework - Dependencies
+# EUMASTER4HPC 2025-2026 | Team 1
+#
+# Install: pip install -r requirements.txt
 
-# Core dependencies
-fabric>=3.0.0          # SSH communication with cluster
+# =============================================================================
+# CORE DEPENDENCIES (Required)
+# =============================================================================
+
+# Cluster Communication
+fabric>=3.0.0          # SSH communication with HPC cluster
 paramiko>=3.0.0        # SSH protocol implementation (used by fabric)
+
+# Configuration & Data
 pyyaml>=6.0            # YAML recipe parsing
-gitpython>=3.1.0       # Git commit tracking for reproducibility
 numpy>=1.23.0          # Numerical operations for percentile calculations
 
-# Reporting and visualization
-matplotlib>=3.7.0      # Plot generation for reports
+# Reproducibility
+gitpython>=3.1.0       # Git commit tracking for reproducibility
 
-# Web UI
-flask>=3.0.0           # Lightweight web UI (Python 3.14 compatible)
+# =============================================================================
+# WEB INTERFACE (Required for --web mode)
+# =============================================================================
+
+flask>=3.0.0           # Lightweight web framework
 jinja2>=3.1.0          # Template engine for Flask
 markdown>=3.5.0        # Markdown to HTML conversion for reports
 
-# Optional: for future enhancements
-# streamlit>=1.28.0    # Alternative UI (requires Python <3.14)
-# gradio>=4.0.0        # Alternative Web UI (optional)
-# pandas>=2.0.0        # Data analysis (optional)
-# prometheus_client>=0.17.0  # Prometheus metrics export (optional)
+# =============================================================================
+# VISUALIZATION (Required for --report with plots)
+# =============================================================================
+
+matplotlib>=3.7.0      # Plot generation for reports
+
+# =============================================================================
+# OPTIONAL DEPENDENCIES
+# =============================================================================
+# Uncomment as needed:
+
+# Advanced data analysis
+# pandas>=2.0.0         # DataFrame operations for complex analysis
+
+# Prometheus metrics export
+# prometheus_client>=0.17.0  # Native Prometheus client
+
+# Alternative UIs (may have Python version constraints)
+# streamlit>=1.28.0     # Alternative UI (requires Python <3.14)
+# gradio>=4.0.0         # Alternative Web UI
+
+# =============================================================================
+# DEVELOPMENT DEPENDENCIES
+# =============================================================================
+# Install with: pip install -r requirements-dev.txt (if available)
+
+# Testing
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+
+# Linting
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.0.0

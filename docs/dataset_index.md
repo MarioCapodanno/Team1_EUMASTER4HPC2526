@@ -1,87 +1,120 @@
-# Dataset Index
+# AI Factory Benchmarking Dataset Index
 
-This document tracks all benchmark experiments run on MeluXina for the AI Factory Benchmarking Framework evaluation.
+This document tracks all benchmark runs with their artifacts for reproducibility and analysis.
 
-## Experiment Categories
+## Dataset Structure
 
-### Inference Benchmarks
-| Benchmark ID | Service | Configuration | Date | Purpose | Status |
-|--------------|---------|---------------|------|---------|--------|
-| 30 | Ollama | 2 clients | 2026-01-08 | Baseline inference | Completed |
-| 31 | Ollama | 2 clients | 2026-01-08 | Baseline inference | Completed |
+Each benchmark produces:
+- `results/<id>/run.json` - Full recipe, parameters, job IDs, git commit
+- `results/<id>/requests.jsonl` - Per-request timing data
+- `results/<id>/summary.json` - Aggregated metrics
+- `reports/<id>/report.md` - Human-readable analysis
+- `reports/<id>/report.json` - Machine-readable analysis
+- `reports/<id>/plots/*.png` - Visualization artifacts
 
-### Storage Benchmarks
-| Benchmark ID | Service | Configuration | Date | Purpose | Status |
-|--------------|---------|---------------|------|---------|--------|
-| 29 | PostgreSQL | 4 clients, stress test | 2026-01-08 | Baseline storage | Completed |
-| 32 | ChromaDB | 4 clients, stress test | 2026-01-08 | Baseline retrieval | Completed |
+---
 
-### PostgreSQL Concurrency Sweep
-| Benchmark ID | Service | Clients | Throughput | P99 Latency | Status |
-|--------------|---------|---------|------------|-------------|--------|
-| BM-20260108-008 | PostgreSQL | 1 | 50.00 RPS | 17ms | Completed |
-| BM-20260108-009 | PostgreSQL | 2 | 54.85 RPS | 17ms | Completed |
-| 29 | PostgreSQL | 4 | 50.00 RPS | 15ms | Completed (Baseline) |
-| BM-20260108-010 | PostgreSQL | 8 | 74.88 RPS | 106ms | Completed |
+## Benchmark Categories
 
-### ChromaDB Concurrency Sweep
-| Benchmark ID | Service | Clients | Throughput | P95 Latency | Status |
-|--------------|---------|---------|------------|-------------|--------|
-| BM-20260108-017 | ChromaDB | 1 | 5.56 RPS | 304ms | Completed |
-| BM-20260108-018 | ChromaDB | 2 | 2.50 RPS | 2321ms | Completed |
-| BM-20260108-019 | ChromaDB | 8 | 4.29 RPS | 4010ms | Completed |
+### Category 1: Inference (LLM)
+Services: vLLM, Ollama
 
-### Ollama Concurrency Sweep
-| Benchmark ID | Service | Clients | Throughput | P95 Latency | Avg Latency | Status |
-|--------------|---------|---------|------------|-------------|-------------|--------|
-| BM-20260108-020 | Ollama | 1 | 1.11 RPS | 1014ms | 797ms | Completed |
-| BM-20260108-021 | Ollama | 2 | 3.00 RPS | 545ms | 495ms | Completed |
-| BM-20260108-022 | Ollama | 4 | 2.60 RPS | 540ms | 445ms | Completed |
+| Benchmark ID | Recipe | Date | Purpose | Status | Concurrency | Notes |
+|--------------|--------|------|---------|--------|-------------|-------|
+| BM-20260109-004 | recipe_ollama_1client.yaml | 2026-01-09 | Sweep baseline | ✅ Complete | 1 | 1.11 RPS, P99=0.98s |
+| BM-20260109-006 | recipe_ollama_2client.yaml | 2026-01-09 | Sweep 2x | ✅ Complete | 2 | 1.90 RPS, P99=0.75s |
+| BM-20260109-008 | recipe_ollama_4client.yaml | 2026-01-09 | Sweep 4x | ✅ Complete | 4 | 2.29 RPS, P99=1.13s |
 
-## Baseline Benchmarks
+### Category 2: Storage (Database/Object Store)
+Services: PostgreSQL, MinIO, Redis
 
-These benchmarks serve as reference points for regression detection:
+| Benchmark ID | Recipe | Date | Purpose | Status | Concurrency | Notes |
+|--------------|--------|------|---------|--------|-------------|-------|
+| BM-20260109-001 | recipe_redis_1client.yaml | 2026-01-09 | Sweep baseline | ✅ Complete | 1 | 3.37 RPS, P95=0.35s |
+| BM-20260109-002 | recipe_redis_2client.yaml | 2026-01-09 | Sweep 2x | ✅ Complete | 2 | 6.51 RPS, P95=0.37s |
+| BM-20260109-003 | recipe_redis_4client.yaml | 2026-01-09 | Sweep 4x | ✅ Complete | 4 | 12.80 RPS, P95=0.37s |
 
-| Category | Baseline ID | Service | Configuration | Notes |
-|----------|-------------|---------|---------------|-------|
-| Storage | 29 | PostgreSQL | 4 clients | First validated run |
-| Retrieval | BM-20260108-017 | ChromaDB | 1 client | Lowest latency baseline |
-| Inference | 30 | Ollama | 2 clients | First validated run |
+### Category 3: Retrieval (Vector DB)
+Services: ChromaDB, Qdrant
 
-## Experiment Design Rationale
+| Benchmark ID | Recipe | Date | Purpose | Status | Concurrency | Notes |
+|--------------|--------|------|---------|--------|-------------|-------|
+| BM-20260109-005 | recipe_chroma_1client.yaml | 2026-01-09 | Sweep baseline | ✅ Complete | 1 | 6.52 RPS, P95=0.26s |
+| BM-20260109-007 | recipe_chroma_2client.yaml | 2026-01-09 | Sweep 2x | ✅ Complete | 2 | 9.09 RPS, P95=0.43s |
+| BM-20260109-009 | recipe_chroma_8client.yaml | 2026-01-09 | Sweep 8x | ✅ Complete | 8 | 6.97 RPS, P95=1.62s |
 
-### Concurrency Sweeps
-We vary the number of concurrent clients (1, 2, 4, 8, 16) to:
-- Identify the saturation point where throughput stops scaling
-- Measure tail latency (P99) growth under load
-- Determine the optimal operating point for SLO compliance
+---
 
-### Prompt Size Sweeps (LLM)
-For LLM services, we vary prompt sizes to understand:
-- Impact of context length on latency
-- Memory pressure effects
-- Token throughput variations
+## Concurrency Sweeps
 
-### Connection Sweeps (Database)
-For database services, we vary connections to measure:
-- Transaction throughput scaling
-- Query latency under concurrent load
-- Connection pool efficiency
+### Inference Sweep
+**Purpose**: Find optimal concurrency for LLM inference under SLO
+**SLO**: P99 < 1.0s
 
-## Reproducibility
+| Sweep Name | Service | Concurrency Levels | Sweep Report | Status |
+|------------|---------|-------------------|--------------|--------|
+| ollama_sweep | Ollama (llama2) | 1, 2, 4 | `reports/sweep_BM-20260109-004_BM-20260109-008/` | ✅ Complete |
 
-Each benchmark can be reproduced using:
+### Storage Sweep
+**Purpose**: Find optimal concurrency for database operations under SLO
+**SLO**: P99 < 100ms
+
+| Sweep Name | Service | Concurrency Levels | Sweep Report | Status |
+|------------|---------|-------------------|--------------|--------|
+| redis_sweep | Redis | 1, 2, 4 | `reports/sweep_BM-20260109-001_BM-20260109-003/` | ✅ Complete |
+
+### Retrieval Sweep
+**Purpose**: Find optimal concurrency for vector search under SLO
+**SLO**: P99 < 500ms
+
+| Sweep Name | Service | Concurrency Levels | Sweep Report | Status |
+|------------|---------|-------------------|--------------|--------|
+| chroma_sweep | ChromaDB | 1, 2, 8 | `reports/sweep_BM-20260109-005_BM-20260109-009/` | ✅ Complete |
+
+---
+
+## Reproducibility Guide
+
+### Re-running a Benchmark
+
+Each benchmark can be reproduced from its `run.json`:
+
 ```bash
-# View the exact configuration used
-cat results/<benchmark_id>/run.json
+# Option 1: Use --rerun command (if available)
+python src/frontend.py --rerun <benchmark_id>
 
-# Re-run with same recipe
-python src/frontend.py examples/<recipe>.yaml
+# Option 2: Manual reproduction from run.json
+# 1. Extract recipe from run.json
+cat results/<id>/run.json | jq '.recipe' > recipe.yaml
+
+# 2. Verify git commit matches
+git checkout $(cat results/<id>/run.json | jq -r '.git_commit')
+
+# 3. Run the recipe
+python src/frontend.py recipe.yaml
 ```
 
-## Results Location
+### Verifying Reproducibility Bundle
 
-- Raw data: `results/<benchmark_id>/requests.jsonl`
-- Summary metrics: `results/<benchmark_id>/summary.json`
-- Reports: `reports/<benchmark_id>/report.md`
-- Plots: `reports/<benchmark_id>/plots/`
+Each `run.json` must contain:
+- ✅ `benchmark_id` - Unique identifier
+- ✅ `created_at` - Timestamp
+- ✅ `git_commit` - Code version
+- ✅ `recipe_hash` - Recipe fingerprint
+- ✅ `recipe` - Full recipe embedded
+- ✅ `target` - Cluster name
+- ✅ `service` - Service deployment details (name, job_id, image, port, etc.)
+- ✅ `clients` - Client deployment details (job_id, command, etc.)
+- ✅ `environment` - Framework version
+
+---
+
+## Notes
+
+- All benchmarks use `BM-YYYYMMDD-NNN` format for IDs
+- Sweep reports are in `reports/sweep_<first>_<last>/`
+- Dataset is continuously updated during Phase 3
+
+---
+
+*Last updated: 2026-01-09*

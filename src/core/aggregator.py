@@ -121,6 +121,9 @@ def aggregate_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
     # Calculate throughput (requests per second)
     requests_per_second = 0.0
     duration = 0.0
+    start_times = []
+    end_times = []
+
     if actual_requests:
         start_times = [
             r.get("timestamp_start", 0)
@@ -135,6 +138,15 @@ def aggregate_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
 
         if start_times and end_times:
             duration = max(end_times) - min(start_times)
+            
+            # Fix for sub-second tests where integer timestamps result in 0 duration
+            # Ensure duration is at least the maximum latency of any single request
+            if latency_stats and "max" in latency_stats:
+                duration = max(duration, latency_stats["max"])
+            else:
+                # Fallback epsilon if no latency stats
+                duration = max(duration, 0.000001)
+
             if duration > 0:
                 requests_per_second = total_requests / duration
 
@@ -182,6 +194,48 @@ def aggregate_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
             "transactions_per_second": requests_per_second,  # Alias for DB
         }
 
+    elif service_type == "redis":
+        # Redis-specific metrics with per-operation breakdown (Team10-style)
+        operations = {}
+        payload_sizes = []
+        
+        for req in successful:
+            op = req.get("operation_type", "unknown").upper()
+            if op not in operations:
+                operations[op] = {"count": 0, "latencies": [], "throughput": 0}
+            operations[op]["count"] += 1
+            if req.get("latency_s", 0) > 0:
+                operations[op]["latencies"].append(req.get("latency_s", 0))
+            
+            # Collect payload sizes if available
+            if req.get("payload_size_bytes"):
+                payload_sizes.append(req.get("payload_size_bytes"))
+
+        # Calculate per-operation metrics
+        for op, data in operations.items():
+            if data["latencies"]:
+                data["avg_latency"] = statistics.mean(data["latencies"])
+                data["min_latency"] = min(data["latencies"])
+                data["max_latency"] = max(data["latencies"])
+                percentiles = calculate_percentiles(data["latencies"], [50, 95, 99])
+                data["p50_latency"] = percentiles["p50"]
+                data["p95_latency"] = percentiles["p95"]
+                data["p99_latency"] = percentiles["p99"]
+                if duration > 0:
+                    data["throughput"] = data["count"] / duration
+                # Clean up raw latencies to save space
+                del data["latencies"]
+
+        service_metrics = {
+            "operations": operations,
+            "transactions_per_second": requests_per_second,
+        }
+        
+        # Add payload size info if collected
+        if payload_sizes:
+            service_metrics["avg_payload_size_bytes"] = statistics.mean(payload_sizes)
+            service_metrics["payload_sizes_used"] = list(set(payload_sizes))
+
     # Collect error information
     error_types = {}
     for req in failed:
@@ -202,13 +256,44 @@ def aggregate_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
     # Add timestamp range
-    timestamps = [
-        r.get("timestamp_start", 0) for r in actual_requests if r.get("timestamp_start")
-    ]
-    if timestamps:
-        summary["test_duration_s"] = max(timestamps) - min(timestamps)
-        summary["test_start_time"] = min(timestamps)
-        summary["test_end_time"] = max(timestamps)
+    if start_times and end_times:
+        summary["test_duration_s"] = duration
+        summary["test_start_time"] = min(start_times)
+        summary["test_end_time"] = max(end_times)
+
+    # Extract parametric configuration (for scaling analysis)
+    # These fields enable Team10-style plots: throughput vs clients, vs payload, etc.
+    parametric_fields = {}
+    
+    # Get configuration from first request (should be consistent across all)
+    first_req = actual_requests[0] if actual_requests else {}
+    
+    # Concurrency / client count
+    if first_req.get("concurrent_requests"):
+        parametric_fields["concurrent_requests"] = first_req.get("concurrent_requests")
+    elif first_req.get("num_clients"):
+        parametric_fields["concurrent_requests"] = first_req.get("num_clients")
+    
+    # Payload size (for Redis, DB benchmarks)
+    if first_req.get("payload_size_bytes"):
+        parametric_fields["payload_size_bytes"] = first_req.get("payload_size_bytes")
+    elif first_req.get("data_size"):
+        parametric_fields["payload_size_bytes"] = first_req.get("data_size")
+    
+    # LLM-specific parameters
+    if first_req.get("prompt_length"):
+        parametric_fields["prompt_length"] = first_req.get("prompt_length")
+    if first_req.get("max_tokens"):
+        parametric_fields["max_tokens"] = first_req.get("max_tokens")
+    if first_req.get("model"):
+        parametric_fields["model"] = first_req.get("model")
+    
+    # Pipeline depth (for Redis)
+    if first_req.get("pipeline"):
+        parametric_fields["pipeline"] = first_req.get("pipeline")
+    
+    if parametric_fields:
+        summary["parametric"] = parametric_fields
 
     return summary
 
@@ -286,35 +371,64 @@ def aggregate_benchmark(benchmark_id: str) -> Optional[Dict[str, Any]]:
     return summary
 
 
+# Default regression thresholds (configurable)
+DEFAULT_REGRESSION_THRESHOLDS = {
+    "latency_pct": 10.0,       # Latency increase > 10% is a regression
+    "throughput_pct": 10.0,    # Throughput decrease > 10% is a regression
+    "success_rate_pct": 1.0,   # Success rate decrease > 1% is a regression
+}
+
+
 def compare_summaries(
-    summary1: Dict[str, Any], summary2: Dict[str, Any]
+    summary1: Dict[str, Any], 
+    summary2: Dict[str, Any],
+    thresholds: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
     """
-    Compare two benchmark summaries and highlight differences.
+    Compare two benchmark summaries and highlight differences (KF4 Regression Detection).
+
+    Uses configurable thresholds to determine if a change is a significant regression.
+    Default thresholds:
+    - Latency: > 10% increase is a regression
+    - Throughput: > 10% decrease is a regression  
+    - Success rate: > 1% decrease is a regression
 
     Args:
         summary1: First (baseline) summary
         summary2: Second (current) summary
+        thresholds: Optional dict with custom thresholds:
+            - latency_pct: max allowed latency increase (%)
+            - throughput_pct: max allowed throughput decrease (%)
+            - success_rate_pct: max allowed success rate decrease (%)
 
     Returns:
-        Comparison results
+        Comparison results with PASS/FAIL verdict
     """
+    # Merge custom thresholds with defaults
+    config = DEFAULT_REGRESSION_THRESHOLDS.copy()
+    if thresholds:
+        config.update(thresholds)
+    
     comparison = {
         "baseline": summary1.get("service_type", "unknown"),
         "current": summary2.get("service_type", "unknown"),
+        "thresholds": config,
         "metrics": {},
+        "regressions": [],
+        "improvements": [],
+        "verdict": "PASS",
     }
 
     # Compare key metrics
     metrics_to_compare = [
-        ("success_rate", "Success Rate (%)"),
-        ("latency_s.avg", "Avg Latency (s)"),
-        ("latency_s.p95", "P95 Latency (s)"),
-        ("latency_s.p99", "P99 Latency (s)"),
-        ("requests_per_second", "Throughput (RPS)"),
+        ("success_rate", "Success Rate (%)", "success_rate"),
+        ("latency_s.avg", "Avg Latency (s)", "latency"),
+        ("latency_s.p95", "P95 Latency (s)", "latency"),
+        ("latency_s.p99", "P99 Latency (s)", "latency"),
+        ("requests_per_second", "Throughput (RPS)", "throughput"),
     ]
 
-    for metric_path, label in metrics_to_compare:
+    for metric_path, label, metric_type in metrics_to_compare:
         keys = metric_path.split(".")
         val1 = summary1
         val2 = summary2
@@ -326,21 +440,55 @@ def compare_summaries(
         delta = val2 - val1
         pct_change = (delta / val1 * 100) if val1 != 0 else 0
 
+        # Determine if this is a regression based on thresholds
+        is_regression = False
+        is_improvement = False
+        threshold_used = None
+        
+        if metric_type == "latency":
+            threshold_used = config["latency_pct"]
+            if pct_change > threshold_used:  # Latency increased beyond threshold
+                is_regression = True
+            elif pct_change < -threshold_used:  # Latency decreased (improvement)
+                is_improvement = True
+        elif metric_type == "throughput":
+            threshold_used = config["throughput_pct"]
+            if pct_change < -threshold_used:  # Throughput decreased beyond threshold
+                is_regression = True
+            elif pct_change > threshold_used:  # Throughput increased (improvement)
+                is_improvement = True
+        elif metric_type == "success_rate":
+            threshold_used = config["success_rate_pct"]
+            if pct_change < -threshold_used:  # Success rate decreased beyond threshold
+                is_regression = True
+            elif pct_change > threshold_used:  # Success rate increased (improvement)
+                is_improvement = True
+
         comparison["metrics"][metric_path] = {
             "label": label,
             "baseline": val1,
             "current": val2,
             "delta": delta,
             "percent_change": pct_change,
-            "regression": False,
+            "regression": is_regression,
+            "improvement": is_improvement,
+            "threshold": threshold_used,
         }
 
-        # Mark regressions
-        if "latency" in label.lower() and delta > 0:
-            comparison["metrics"][metric_path]["regression"] = True
-        elif "Success Rate" in label and delta < 0:
-            comparison["metrics"][metric_path]["regression"] = True
-        elif "Throughput" in label and delta < 0:
-            comparison["metrics"][metric_path]["regression"] = True
+        if is_regression:
+            comparison["regressions"].append({
+                "metric": label,
+                "change": f"{pct_change:+.1f}%",
+                "threshold": f"{threshold_used}%",
+            })
+        elif is_improvement:
+            comparison["improvements"].append({
+                "metric": label,
+                "change": f"{pct_change:+.1f}%",
+            })
 
+    # Set verdict
+    if comparison["regressions"]:
+        comparison["verdict"] = "FAIL"
+    
     return comparison

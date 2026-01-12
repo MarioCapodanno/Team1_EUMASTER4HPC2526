@@ -1,0 +1,20 @@
+configuration:
+  target: meluxina
+service:
+  type: redis
+  name: redis-scale-8c
+  image: redis:alpine
+  partition: cpu
+  time_limit: 00:20:00
+  account: p200981
+  port: 6379
+client:
+  type: redis_stress
+  partition: cpu
+  time_limit: 00:10:00
+  account: p200981
+benchmarks:
+  num_clients: 8
+  metrics:
+  - throughput
+  - latency

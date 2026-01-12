@@ -1,0 +1,26 @@
+configuration:
+  target: meluxina
+service:
+  type: ollama
+  name: ollama-small-32c
+  image: ollama/ollama:latest
+  partition: gpu
+  time_limit: 00:45:00
+  account: p200981
+  port: 11434
+  settings:
+    model: llama3.2:1b
+    warmup_seconds: 15
+client:
+  type: ollama_smoke
+  partition: cpu
+  time_limit: 00:20:00
+  account: p200981
+  settings:
+    model: llama3.2:1b
+    num_requests: 20
+benchmarks:
+  num_clients: 32
+  metrics:
+  - latency
+  - throughput
