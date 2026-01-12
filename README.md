@@ -5,6 +5,8 @@
 [![MeluXina](https://img.shields.io/badge/HPC-MeluXina-orange.svg)](https://luxprovide.lu/)
 
 DEMO VIDEO: https://jumpshare.com/s/cIjAgHpFNb3LU72oAiBg
+
+REPORT: [![Link](https://github.com/MarioCapodanno/Team1_EUMASTER4HPC2526/blob/main/report.pdf)]
 ---
 
 ##  Overview
