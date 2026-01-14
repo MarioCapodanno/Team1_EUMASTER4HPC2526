@@ -8,7 +8,6 @@ Scripts for automated benchmark campaign execution.
 |------|-------------|
 | `config.py` | Shared configuration (TARGET, ACCOUNT) with environment variable support |
 | `run_campaign.py` | Launch scaling benchmarks for Redis, Ollama, vLLM, Postgres |
-| `launch_overnight.py` | Overnight benchmark suite with predefined scenarios |
 | `analyze_benchmarks.py` | Generate analysis plots from completed benchmarks |
 
 ## Configuration
