@@ -22,7 +22,7 @@ This directory contains project documentation, reports, and presentation materia
 - `figures/` - Diagrams and figures for reports
 
 
-## 📖 Quick Links
+##  Quick Links
 
 | Topic | Document |
 |-------|----------|
