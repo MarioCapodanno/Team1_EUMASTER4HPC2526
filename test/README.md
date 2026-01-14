@@ -10,8 +10,6 @@ Pytest test suite for the benchmarking framework.
 | `test_integration_e2e.py` | End-to-end integration tests |
 | `test_kf_features.py` | Key feature validation tests |
 | `test_manager.py` | Manager class functionality tests |
-| `test_month4_services.py` | Month 4 service deployment tests |
-| `test_new_features.py` | New feature unit tests |
 | `test_web_interface.py` | Web UI functionality tests |
 
 ## Running Tests
