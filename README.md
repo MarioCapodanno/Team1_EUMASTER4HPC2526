@@ -286,8 +286,8 @@ results/<benchmark_id>/
 └── logs/              # Service and client logs
 
 reports/<benchmark_id>/
-├── report.md          # Human-readable analysis
-├── report.json        # Machine-readable summary
+├── report.md          
+├── report.json        
 └── plots/             # Visualization PNGs
     ├── latency_percentiles.png
     ├── throughput_timeline.png
@@ -307,22 +307,9 @@ python src/frontend.py --rerun BM-20260112-001
 
 Captured metadata includes:
 - Complete YAML recipe (embedded)
-- Git commit hash
 - Container image digests
 - Slurm job IDs and node allocations
 - Timestamps for all lifecycle events
-
----
-
-##  Documentation
-
-| Document | Description |
-|----------|-------------|
-| [`docs/report.tex`](docs/report.tex) | Academic LaTeX report |
-| [`docs/presentation.tex`](docs/presentation.tex) | Beamer presentation slides |
-| [`docs/RECIPE_REFERENCE.md`](docs/RECIPE_REFERENCE.md) | Complete recipe format reference |
-| [`docs/methodology.md`](docs/methodology.md) | Benchmarking methodology |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | System architecture documentation |
 
 ---
 
@@ -333,25 +320,9 @@ Captured metadata includes:
 | Language | Python 3.10+ |
 | Cluster Communication | Fabric, Paramiko (SSH) |
 | Job Scheduling | Slurm |
-| Containerization | Apptainer/Singularity |
+| Containerization | Apptainer |
 | Web Framework | Flask |
 | Visualization | Matplotlib, Chart.js |
 | Monitoring | Prometheus, Grafana |
-| Target Platform | MeluXina (LuxProvide) |
 
 ---
-
-##  Team
-
-**Team 1 — EUMASTER4HPC 2025-2026**
-
-| Member | 
-|--------|
-| Mario Capodanno 
-| Giuseppe | 
-| Can | 
-| Thies | 
-
----
-
-*Developed for the EUMASTER4HPC Data Science Challenge 2025-2026*
