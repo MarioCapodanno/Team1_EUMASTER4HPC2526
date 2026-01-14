@@ -2,7 +2,7 @@
 
 This directory contains project documentation, reports, and presentation materials.
 
-## 📚 Contents
+##  Contents
 
 ### Core Documentation
 
@@ -11,39 +11,16 @@ This directory contains project documentation, reports, and presentation materia
 | [`RECIPE_REFERENCE.md`](RECIPE_REFERENCE.md) | Complete YAML recipe format reference |
 | [`methodology.md`](methodology.md) | Benchmarking methodology and metrics |
 
-### Academic Materials
-
-| File | Description |
-|------|-------------|
-| [`report.tex`](report.tex) | LaTeX academic report (~30 pages) |
-| [`presentation.tex`](presentation.tex) | Beamer presentation slides (~20 slides) |
-
 ### Data & Indexes
 
 | File | Description |
 |------|-------------|
 | [`dataset_index.md`](dataset_index.md) | Index of benchmark datasets and results |
 
-## 📂 Subdirectories
+##  Subdirectories
 
 - `figures/` - Diagrams and figures for reports
 
-## 🔧 Building Documents
-
-### LaTeX Report
-
-```bash
-cd docs
-pdflatex report.tex
-pdflatex report.tex  # Run twice for references
-```
-
-### Beamer Presentation
-
-```bash
-cd docs
-pdflatex presentation.tex
-```
 
 ## 📖 Quick Links
 
@@ -51,7 +28,6 @@ pdflatex presentation.tex
 |-------|----------|
 | How to write recipes | [`RECIPE_REFERENCE.md`](RECIPE_REFERENCE.md) |
 | Metrics explained | [`methodology.md`](methodology.md) |
-| System architecture | [`../ARCHITECTURE.md`](../ARCHITECTURE.md) |
 | Getting started | [`../README.md`](../README.md) |
 
 ---
