@@ -237,41 +237,39 @@ Team1_EUMASTER4HPC2526/
 ├── src/
 │   ├── frontend.py              # CLI entry point, recipe parsing
 │   ├── core/
-│   │   ├── manager.py           # Service/client orchestration
-│   │   ├── aggregator.py        # Metrics aggregation
-│   │   ├── saturation.py        # KF1: Saturation detection
-│   │   ├── bottleneck.py        # KF2: Bottleneck attribution
-│   │   ├── lifecycle.py         # Job lifecycle management
-│   │   └── collector.py         # Artifact collection
+│   │   ├── manager.py            # Service/client orchestration
+│   │   ├── aggregator.py         # Metrics aggregation
+│   │   ├── saturation.py         
+│   │   ├── bottleneck.py         
+│   │   ├── lifecycle.py          # Job lifecycle management
+│   │   └── collector.py          # Artifact collection
 │   ├── infra/
-│   │   ├── communicator.py      # SSH/Slurm abstraction
-│   │   └── storage.py           # Benchmark state persistence
+│   │   ├── communicator.py       # SSH/Slurm abstraction
+│   │   └── storage.py            # Benchmark state persistence
 │   ├── models/
-│   │   ├── service.py           # Service data model
-│   │   └── client.py            # Client data model
+│   │   ├── service.py            
+│   │   └── client.py             
 │   ├── builders/
-│   │   └── command_builders.py  # Sbatch script generation
+│   │   └── command_builders.py   # Sbatch script generation
 │   ├── monitoring/
-│   │   ├── manager.py           # Prometheus/Grafana stack
-│   │   └── monitor.py           # Metrics collection
+│   │   ├── manager.py            # Prometheus/Grafana stack
+│   │   └── monitor.py            # Metrics collection
 │   ├── reporting/
-│   │   ├── reporter.py          # Report generation
-│   │   ├── plotting.py          # Chart generation
-│   │   └── artifacts.py         # Artifact I/O
+│   │   ├── reporter.py           # Report generation
+│   │   ├── plotting.py           # Chart generation
+│   │   └── artifacts.py          
 │   └── web/
-│       └── flask_app.py         # Web interface
+│       └── flask_app.py          # Web interface
 ├── examples/                     # Recipe templates
 ├── measurements/                 # Benchmark campaigns
-├── results/                      # Benchmark artifacts (gitignored)
+├── results/                      # Benchmark artifacts
 ├── reports/                      # Generated reports
 ├── docs/                         # Documentation
-│   ├── report.tex               # Academic LaTeX report
-│   ├── presentation.tex         # Beamer slides
-│   ├── RECIPE_REFERENCE.md      # Recipe format reference
-│   └── methodology.md           # Benchmarking methodology
+│   ├── RECIPE_REFERENCE.md       # Recipe format reference
+│   └── methodology.md            # Benchmarking methodology
 ├── scripts/                      # Automation scripts
 ├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+└── README.md                     
 ```
 
 ---
