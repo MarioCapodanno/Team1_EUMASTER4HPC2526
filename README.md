@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MeluXina](https://img.shields.io/badge/HPC-MeluXina-orange.svg)](https://luxprovide.lu/)
 
-DEMO VIDEO: https://jumpshare.com/s/cIjAgHpFNb3LU72oAiBg
+DEMO VIDEO: [link](https://jumpshare.com/share/bO8HTrzLl8NufzFZh94K)
 
 REPORT: [![Link](https://github.com/MarioCapodanno/Team1_EUMASTER4HPC2526/blob/main/report.pdf)]
 ---
